@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CicloRitmo - Tu Entrenador Virtual de Spinning</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0B0F19',
+                            card: '#161F30',
+                            accent: '#8B5CF6',
+                            green: '#10B981',
+                            red: '#EF4444',
+                            orange: '#F59E0B',
+                            blue: '#06B6D4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;600;700;800&family=Share+Tech+Mono&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0B0F19;
+            overscroll-behavior-y: contain; /* Evita recargas molestas al arrastrar en móviles */
+        }
+        .font-mono-custom {
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Cabecera de la Aplicación (Se oculta dinámicamente al entrenar para ganar espacio vertical) -->
+    <header id="main-header" class="border-b border-white/10 bg-cyber-card/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <!-- SVG Logo Ciclismo -->
+                <svg class="w-8 h-8 text-cyber-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18.5" cy="17.5" r="3.5"/>
+                    <circle cx="5.5" cy="17.5" r="3.5"/>
+                    <circle cx="15" cy="5" r="1"/>
+                    <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
+                </svg>
+                <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">CicloRitmo</h1>
+            </div>
+            <!-- Controles Rápidos de Cabecera -->
+            <div class="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                <button id="masterSoundBtn" onclick="toggleSound()" class="hover:text-cyber-accent transition flex items-center gap-1.5 text-xs font-semibold">
+                    <span id="soundIcon">🔊</span>
+                    <span id="soundText" class="hidden sm:inline">Sonido ON</span>
+                </button>
+                <div class="w-px h-4 bg-white/20"></div>
+                <div class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                    🔒 <span>Pantalla Protegida</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal Adaptativo -->
+    <main class="flex-grow w-full max-w-4xl mx-auto px-4 py-2 flex flex-col justify-center">
+        
+        <!-- PANTALLA 1: SELECCIONAR RUTINA -->
+        <section id="screen-selector" class="space-y-6">
+            <div class="text-center space-y-2 py-4">
+                <h2 class="text-3xl font-extrabold text-white">¡A pedalear hoy! 🚴‍♂️</h2>
+                <p class="text-slate-400 text-sm max-w-md mx-auto">Elige una rutina según tu energía de hoy o diseña una personalizada.</p>
+            </div>
+
+            <!-- Filtros de Categorías -->
+            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-white/10">
+                <button onclick="filterCategory('all')" id="tab-all" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-cyber-accent text-white border border-cyber-accent">
+                    Todos
+                </button>
+                <button onclick="filterCategory('suave')" id="tab-suave" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10">
+                    🟢 Suave / Iniciación
+                </button>
+                <button onclick="filterCategory('hiit')" id="tab-hiit" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10">
+                    🔴 HIIT / Tabata
+                </button>
+                <button onclick="filterCategory('fuerza')" id="tab-fuerza" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10">
+                    🟠 Fuerza / Escalada
+                </button>
+                <button onclick="filterCategory('fondo')" id="tab-fondo" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10">
+                    🟣 Fondo / Cardio
+                </button>
+            </div>
+
+            <!-- Listado de Rutinas Incorporadas -->
+            <div id="routines-grid" class="grid gap-4 md:grid-cols-2">
+                <!-- Se inyectan dinámicamente mediante JS -->
+            </div>
+
+            <!-- Botón Creador de Rutinas -->
+            <div class="bg-cyber-card/30 border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-center sm:text-left">
+                    <h4 class="font-bold text-white">¿Quieres diseñar tu propia rutina?</h4>
+                    <p class="text-slate-400 text-xs">Crea intervalos con tus propios tiempos, cadencias y resistencias.</p>
+                </div>
+                <button onclick="openCustomCreator()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white text-sm font-semibold shadow-md transition-all">
+                    🛠️ Diseñar Rutina Personalizada
+                </button>
+            </div>
+        </section>
+
+        <!-- PANTALLA 2: CONFIGURACIÓN DE AUDIO & DETALLE PRE-ARRANQUE -->
+        <section id="screen-preworkout" class="hidden space-y-6">
+            <button onclick="goBackToSelector()" class="text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-1">
+                ← Volver a Rutinas
+            </button>
+
+            <div class="bg-cyber-card p-6 rounded-2xl border border-white/10 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
+                    <div>
+                        <h2 id="pre-title" class="text-2xl font-extrabold text-white">Nombre de Rutina</h2>
+                        <p id="pre-description" class="text-slate-400 text-xs mt-1">Descripción corta de la rutina.</p>
+                    </div>
+                    <div class="bg-white/5 px-4 py-2 rounded-xl text-center">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Duración Total</span>
+                        <span id="pre-duration" class="text-xl font-bold font-mono-custom text-cyber-accent">00:00</span>
+                    </div>
+                </div>
+
+                <!-- Configuración de Sonidos -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-sm text-slate-300 uppercase tracking-wider">Opciones de Audio para el Entrenamiento</h3>
+                    
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition">
+                            <input type="checkbox" id="cfg-ticks" checked class="w-5 h-5 accent-cyber-accent rounded">
+                            <div>
+                                <span class="block font-bold text-sm text-white">Metrónomo de Cadencia</span>
+                                <span class="block text-slate-400 text-[11px]">Un tic acústico cada vez que el pedal pasa por la parte superior (100% sintonizado con tus RPM).</span>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition">
+                            <input type="checkbox" id="cfg-countdown" checked class="w-5 h-5 accent-cyber-accent rounded">
+                            <div>
+                                <span class="block font-bold text-sm text-white">Avisos de Cambio (3, 2, 1)</span>
+                                <span class="block text-slate-400 text-[11px]">Tonos de cuenta regresiva antes de cambiar de fase.</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="pt-2 flex flex-wrap items-center gap-4">
+                        <!-- Botón para probar el sonido -->
+                        <button onclick="testAppSound()" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-1.5 transition">
+                            🔊 Probar Altavoces / Sonido
+                        </button>
+                        <p class="text-xs text-slate-400">💡 Nota: Sube el volumen de tu dispositivo para escuchar las alarmas.</p>
+                    </div>
+                </div>
+
+                <!-- Botón de Inicio Principal -->
+                <button onclick="startWorkout()" class="w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-extrabold text-lg shadow-lg shadow-emerald-950/40 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+                    ⚡ INICIAR ENTRENAMIENTO Ahora
+                </button>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: CREADOR DE RUTINA PERSONALIZADA -->
+        <section id="screen-creator" class="hidden space-y-6">
+            <button onclick="goBackToSelector()" class="text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-1">
+                ← Cancelar y volver
+            </button>
+
+            <div class="bg-cyber-card p-6 rounded-2xl border border-white/10 space-y-6">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-white">Diseña tu Rutina Personalizada</h2>
+                    <p class="text-slate-400 text-xs">Añade los bloques de intervalos que prefieras para entrenar a tu manera.</p>
+                </div>
+
+                <!-- Lista de Intervalos -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-sm text-slate-300">Intervalos de la Rutina:</h3>
+                    
+                    <div id="custom-intervals-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        <!-- Se insertan dinámicamente -->
+                    </div>
+
+                    <!-- Formulario para agregar un nuevo intervalo -->
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Nombre Intervalo</label>
+                            <input type="text" id="new-int-name" value="Trabajo" class="w-full bg-cyber-bg border border-white/10 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-cyber-accent">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Duración (segundos)</label>
+                            <input type="number" id="new-int-duration" value="60" min="5" class="w-full bg-cyber-bg border border-white/10 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-cyber-accent">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Resistencia (1-10)</label>
+                            <input type="number" id="new-int-res" value="5" min="1" max="10" class="w-full bg-cyber-bg border border-white/10 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-cyber-accent">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Cadencia (RPM)</label>
+                            <input type="number" id="new-int-rpm" value="85" min="30" max="150" class="w-full bg-cyber-bg border border-white/10 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-cyber-accent">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Tipo de Ritmo</label>
+                            <select id="new-int-type" class="w-full bg-cyber-bg border border-white/10 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-cyber-accent">
+                                <option value="warmup">Calentamiento</option>
+                                <option value="work" selected>Fuerza/Trabajo</option>
+                                <option value="recovery">Recuperación</option>
+                                <option value="cooldown">Enfriamiento</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 sm:col-span-3">
+                            <button onclick="addCustomInterval()" class="w-full py-2 rounded-lg bg-cyber-accent hover:bg-violet-500 text-white font-bold text-sm transition">
+                                ➕ Añadir Bloque
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guardar e Iniciar -->
+                <div class="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
+                    <button onclick="saveAndGoToPreworkout()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-base transition">
+                        💾 Guardar y Configurar Audio
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 4: ENTRENAMIENTO ACTIVO (MODO DASHBOARD OPTIMIZADO - 100% NO SCROLL) -->
+        <section id="screen-workout" class="hidden h-[98vh] sm:h-[85vh] flex flex-col justify-between overflow-hidden select-none">
+            
+            <!-- Fila 1: Barra de Control Superior -->
+            <div class="flex justify-between items-center bg-cyber-card/70 border border-white/5 p-2.5 rounded-xl text-sm shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="active-routine-name" class="font-extrabold text-white truncate max-w-[150px] xs:max-w-[190px] sm:max-w-xs text-xs sm:text-sm">--</span>
+                    <span id="active-interval-counter" class="text-[10px] sm:text-xs bg-white/10 px-2 py-0.5 rounded-full font-bold text-slate-400">1/10</span>
+                </div>
+                <button onclick="openStopConfirmModal()" class="text-[10px] sm:text-xs font-bold text-cyber-red bg-cyber-red/10 border border-cyber-red/20 px-3.5 py-1 rounded-full hover:bg-cyber-red hover:text-white transition">
+                    🛑 Parar
+                </button>
+            </div>
+
+            <!-- Fila 2: Objetivos de Ritmo Masivos (Gran Legibilidad de Lejos) -->
+            <div class="grid grid-cols-2 gap-3 shrink-0 my-1">
+                <!-- RPM sugerido -->
+                <div class="bg-cyber-card border border-white/10 p-3 rounded-2xl flex flex-col justify-center items-center relative overflow-hidden">
+                    <div class="absolute top-1.5 left-2 text-[9px] font-extrabold text-slate-400 tracking-wider">CADENCIA RECOMENDADA</div>
+                    <span id="target-rpm" class="text-5xl sm:text-6xl font-black font-mono-custom text-cyan-400 mt-2">--</span>
+                    <span class="text-[10px] text-slate-400 font-semibold mt-1">RPM (Pedaladas)</span>
+                </div>
+                
+                <!-- Resistencia sugerida -->
+                <div class="bg-cyber-card border border-white/10 p-3 rounded-2xl flex flex-col justify-center items-center relative overflow-hidden">
+                    <div class="absolute top-1.5 left-2 text-[9px] font-extrabold text-slate-400 tracking-wider">RESISTENCIA BICI</div>
+                    <span id="target-resistance" class="text-5xl sm:text-6xl font-black font-mono-custom text-amber-500 mt-2">--</span>
+                    <span class="text-[10px] text-slate-400 font-semibold mt-1">Nivel en Perilla (1-10)</span>
+                </div>
+            </div>
+
+            <!-- Fila 3: Consola Central de Tiempo & Metrónomo (Integrado) -->
+            <div class="bg-cyber-card border border-white/5 rounded-2xl p-3 flex items-center justify-between gap-4 flex-grow my-1">
+                <!-- Mitad Izquierda de la Consola: El gran contador de intervalo -->
+                <div class="flex flex-col justify-center items-start pl-2 flex-grow">
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400" id="current-stage-type">Fase Actual</span>
+                    <span id="interval-name" class="text-base sm:text-lg font-extrabold text-white truncate max-w-[160px] xs:max-w-[200px]">Calentamiento</span>
+                    <!-- El temporizador gigante -->
+                    <span id="interval-timer" class="text-5xl sm:text-6xl font-black font-mono-custom text-white tracking-tighter mt-1">00:00</span>
+                </div>
+
+                <!-- Mitad Derecha de la Consola: El Metrónomo Circular Sincronizado -->
+                <div class="flex flex-col items-center justify-center shrink-0 pr-2">
+                    <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center bg-white/5 rounded-full border border-white/10">
+                        <!-- Barra circular de progreso del intervalo actual envuelta en la rueda -->
+                        <svg class="absolute inset-0 w-full h-full -rotate-90 scale-[1.03]" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4"/>
+                            <circle id="circular-progress" cx="50" cy="50" r="46" fill="none" stroke="#8B5CF6" stroke-width="4" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-1000 ease-linear"/>
+                        </svg>
+
+                        <!-- SVG Rueda de Bicicleta Metrónomo Visual -->
+                        <svg id="pedalWheel" class="w-20 h-20 sm:w-24 sm:h-24 text-cyber-accent" style="transform-origin: center; transition: none;" viewBox="0 0 100 100">
+                            <!-- Llanta Exterior -->
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="3.5" fill="none"/>
+                            <!-- Radios Sólidos Secundarios -->
+                            <line x1="50" y1="8" x2="50" y2="92" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                            <line x1="8" y1="50" x2="92" y2="50" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+                            <line x1="20.3" y1="20.3" x2="79.7" y2="79.7" stroke="currentColor" stroke-width="1.2" opacity="0.3"/>
+                            <line x1="20.3" y1="79.7" x2="79.7" y2="20.3" stroke="currentColor" stroke-width="1.2" opacity="0.3"/>
+                            
+                            <!-- IDENTIFICADOR PRINCIPAL (Radio grueso de color ámbar brillante) -->
+                            <line x1="50" y1="50" x2="50" y2="8" stroke="#F59E0B" stroke-width="5" stroke-linecap="round"/>
+                            
+                            <!-- Eje central -->
+                            <circle cx="50" cy="50" r="9" fill="currentColor"/>
+                            <circle cx="50" cy="50" r="4" fill="#161F30"/>
+                            
+                            <!-- PUNTO REFLECTOR ROJO NEÓN -->
+                            <circle cx="50" cy="14" r="6.5" fill="#EF4444" stroke="#FFFFFF" stroke-width="2.5"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fila 4: Próximo Intervalo (Mini banner de una sola línea) -->
+            <div id="next-interval-banner" class="bg-cyber-accent/10 border border-cyber-accent/30 p-2 rounded-xl flex justify-between items-center shrink-0 my-1 text-xs sm:text-sm">
+                <div class="flex items-center gap-2 truncate">
+                    <span class="text-cyber-accent font-extrabold text-[10px] uppercase border border-cyber-accent/30 px-1.5 py-0.5 rounded bg-cyber-accent/10">Siguiente</span>
+                    <span id="next-interval-name" class="font-bold text-white truncate max-w-[140px] xs:max-w-[180px]">--</span>
+                </div>
+                <span id="next-interval-specs" class="font-mono-custom font-bold text-cyber-accent bg-cyber-accent/20 px-2 py-0.5 rounded-md text-[11px] sm:text-xs">-- RPM | Res. --</span>
+            </div>
+
+            <!-- Fila 5: Panel de Controles Gigantes -->
+            <div class="bg-cyber-card border border-white/5 p-3 rounded-2xl flex flex-col justify-between shrink-0 my-1">
+                <!-- Progreso Global Compacto -->
+                <div class="flex justify-between items-center text-[11px] text-slate-400 font-semibold mb-2">
+                    <span>Tiempo Transcurrido: <strong id="global-elapsed" class="text-white font-mono-custom">00:00</strong></span>
+                    <span>Total: <strong id="global-total" class="text-white font-mono-custom">00:00</strong></span>
+                </div>
+                
+                <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden mb-3">
+                    <div id="global-progress-bar" class="bg-gradient-to-r from-violet-500 to-cyan-500 h-full w-0 transition-all duration-1000"></div>
+                </div>
+
+                <!-- Botones Gigantescos para Manos con Sudor -->
+                <div class="flex justify-between items-center gap-4">
+                    <!-- Botón Anterior -->
+                    <button onclick="prevInterval()" class="flex-1 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-all flex justify-center items-center active:scale-95">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+
+                    <!-- Play / Pause MÁXIMO -->
+                    <button id="playPauseBtn" onclick="togglePlayPause()" class="flex-[1.5] py-4 rounded-xl bg-cyber-accent hover:bg-violet-500 text-white shadow-lg shadow-violet-950/40 transition-all flex justify-center items-center active:scale-95">
+                        <svg id="playPauseIcon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Siguiente -->
+                    <button onclick="nextInterval()" class="flex-1 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-all flex justify-center items-center active:scale-95">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fila 6: Estadísticas de Esfuerzo en tiempo real (Cinta Inferior) -->
+            <div class="grid grid-cols-3 gap-1 bg-cyber-card/30 p-2 rounded-xl text-center shrink-0 text-[10px]">
+                <div>
+                    <span class="block text-slate-400 font-bold tracking-wider mb-0.5">Esfuerzo</span>
+                    <span id="stat-effort" class="text-white font-extrabold truncate block">--</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400 font-bold tracking-wider mb-0.5">🔥 Calorías</span>
+                    <span id="stat-calories" class="text-cyber-green font-extrabold font-mono-custom block">0 kcal</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400 font-bold tracking-wider mb-0.5">🚴‍♂️ Distancia</span>
+                    <span id="stat-distance" class="text-cyber-blue font-extrabold font-mono-custom block">0.0 km</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- PANTALLA 5: RESUMEN DE ENTRENAMIENTO COMPLETADO -->
+        <section id="screen-summary" class="hidden space-y-6 max-w-md mx-auto">
+            <div class="bg-cyber-card p-6 rounded-3xl border border-white/10 text-center space-y-6">
+                <div class="w-20 h-20 bg-green-500/10 rounded-full border border-green-500/30 flex items-center justify-center mx-auto text-4xl animate-pulse">
+                    🏆
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-extrabold text-white">¡Rutina Completada!</h2>
+                    <p class="text-slate-400 text-sm">¡Increíble trabajo! Has completado con éxito todo tu entrenamiento de hoy en la bici estática.</p>
+                </div>
+
+                <!-- Resumen de Tarjetas -->
+                <div class="grid grid-cols-2 gap-4 text-left">
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tiempo de Pedaleo</span>
+                        <span id="sum-time" class="text-2xl font-black font-mono-custom text-white">00:00</span>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Calorías Quemadas</span>
+                        <span id="sum-calories" class="text-2xl font-black font-mono-custom text-cyber-green">0 kcal</span>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Distancia Aprox.</span>
+                        <span id="sum-distance" class="text-2xl font-black font-mono-custom text-cyber-blue">0.0 km</span>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esfuerzo Promedio</span>
+                        <span id="sum-effort" class="text-2xl font-black text-cyber-orange">Fuerza 5/10</span>
+                    </div>
+                </div>
+
+                <!-- Botón de retorno -->
+                <button onclick="goBackToSelector()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white font-extrabold transition-all">
+                    🏠 Volver al Menú Principal
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie de Página (Ocultable dinámicamente al entrenar) -->
+    <footer id="main-footer" class="border-t border-white/5 py-4 text-center text-xs text-slate-500 mt-8">
+        <div class="max-w-4xl mx-auto px-4 space-y-1">
+            <p>© 2026 CicloRitmo. Tu entrenamiento premium, gratis y libre de anuncios.</p>
+            <p class="text-[10px] text-slate-600">Sintetizador Web Audio API incorporado localmente para una máxima velocidad y privacidad.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL DE CONFIRMACIÓN PARA ABANDONAR -->
+    <div id="stop-confirm-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-cyber-card max-w-sm w-full p-6 rounded-2xl border border-white/10 space-y-4">
+            <h3 class="text-xl font-bold text-white">¿Estás seguro de parar?</h3>
+            <p class="text-slate-400 text-sm">Se perderá todo el progreso de la rutina actual y tendrás que volver a empezar.</p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeStopConfirmModal()" class="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-sm transition">
+                    Seguir Entrenando
+                </button>
+                <button onclick="confirmStopWorkout()" class="flex-1 py-2.5 rounded-lg bg-cyber-red hover:bg-red-500 text-white font-bold text-sm transition">
+                    Sí, Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT DE LA APP -->
+    <script>
+        // --- 1. MODELOS DE DATOS DE RUTINAS ---
+        const ROUTINES = {
+            // CATEGORÍA: SUAVE / INICIACIÓN
+            principiante: {
+                title: "Iniciación al Cardio",
+                category: "suave",
+                description: "Pensada para calentar adecuadamente e introducir picos moderados de esfuerzo.",
+                intervals: [
+                    { name: "Calentamiento Suave", duration: 180, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Esfuerzo Moderado", duration: 120, res: 4, rpm: 85, type: "work" },
+                    { name: "Recuperación Activa", duration: 90, res: 3, rpm: 75, type: "recovery" },
+                    { name: "Esfuerzo Moderado", duration: 120, res: 5, rpm: 85, type: "work" },
+                    { name: "Recuperación Activa", duration: 90, res: 3, rpm: 75, type: "recovery" },
+                    { name: "Pico de Fuerza Corto", duration: 90, res: 6, rpm: 70, type: "work" },
+                    { name: "Enfriamiento y Relax", duration: 180, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+            piramide_suave: {
+                title: "Pirámide de Ritmo",
+                category: "suave",
+                description: "Sube progresivamente la intensidad de pedalada en forma de pirámide y desciende con control.",
+                intervals: [
+                    { name: "Calentamiento", duration: 180, res: 2, rpm: 80, type: "warmup" },
+                    { name: "Peldaño 1: Ritmo Liso", duration: 180, res: 3, rpm: 85, type: "work" },
+                    { name: "Peldaño 2: Resistencia Media", duration: 180, res: 4, rpm: 90, type: "work" },
+                    { name: "Punta de Pirámide: Sprint", duration: 120, res: 5, rpm: 100, type: "work" },
+                    { name: "Bajada 1: Resistencia Media", duration: 180, res: 4, rpm: 90, type: "work" },
+                    { name: "Bajada 2: Ritmo Liso", duration: 180, res: 3, rpm: 85, type: "work" },
+                    { name: "Enfriamiento Relajante", duration: 180, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+
+            // CATEGORÍA: HIIT / TABATA
+            tabata: {
+                title: "Tabata Quemagrasa",
+                category: "hiit",
+                description: "HIIT puro con bloques explosivos de 20 segundos intensivos por 10 de descanso activo.",
+                intervals: [
+                    { name: "Calentamiento Progresivo", duration: 300, res: 3, rpm: 85, type: "warmup" },
+                    { name: "SÓLO TABATA 1/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 1/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 2/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 2/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 3/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 3/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 4/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 4/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 5/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 5/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 6/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 6/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 7/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA 7/8", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "SÓLO TABATA 8/8", duration: 20, res: 6, rpm: 110, type: "work" },
+                    { name: "RECUPERA FINAL", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "Transición Aeróbica", duration: 240, res: 4, rpm: 80, type: "recovery" },
+                    { name: "Enfriamiento Profundo", duration: 300, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+            tabata_double: {
+                title: "Tabata Doble Explosivo",
+                category: "hiit",
+                description: "Dos series completas de Tabata separadas por un bloque de resistencia intermedia. Muy demandante.",
+                intervals: [
+                    { name: "Calentamiento Activo", duration: 240, res: 3, rpm: 85, type: "warmup" },
+                    { name: "BLOQUE A: SPRINT 1/4", duration: 20, res: 7, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 1/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE A: SPRINT 2/4", duration: 20, res: 7, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 2/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE A: SPRINT 3/4", duration: 20, res: 7, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 3/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE A: SPRINT 4/4", duration: 20, res: 7, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 4/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "Valle de Recuperación", duration: 240, res: 4, rpm: 80, type: "recovery" },
+                    { name: "BLOQUE B: SPRINT 1/4", duration: 20, res: 8, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 1/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE B: SPRINT 2/4", duration: 20, res: 8, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 2/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE B: SPRINT 3/4", duration: 20, res: 8, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN 3/4", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "BLOQUE B: SPRINT 4/4", duration: 20, res: 8, rpm: 115, type: "work" },
+                    { name: "RECUPERACIÓN FINAL", duration: 10, res: 3, rpm: 70, type: "recovery" },
+                    { name: "Enfriamiento Progresivo", duration: 180, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+
+            // CATEGORÍA: FUERZA / ESCALADA
+            montana: {
+                title: "Subida a la Montaña",
+                category: "fuerza",
+                description: "Aumento gradual de la resistencia simulando colinas empinadas para tonificar piernas.",
+                intervals: [
+                    { name: "Calentamiento y Ajuste", duration: 300, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Colina Inicial", duration: 180, res: 5, rpm: 75, type: "work" },
+                    { name: "Descanso en Bajada", duration: 120, res: 3, rpm: 90, type: "recovery" },
+                    { name: "Cuesta Intermedia", duration: 180, res: 6, rpm: 70, type: "work" },
+                    { name: "Pared Final Empinada", duration: 120, res: 8, rpm: 60, type: "work" },
+                    { name: "Descanso Liso", duration: 180, res: 3, rpm: 85, type: "recovery" },
+                    { name: "Cuesta Extrema Máxima", duration: 120, res: 9, rpm: 55, type: "work" },
+                    { name: "Enfriamiento Completo", duration: 300, res: 2, rpm: 70, type: "cooldown" }
+                ]
+            },
+            montana_alpinos: {
+                title: "Picos Alpinos Extremos",
+                category: "fuerza",
+                description: "Entrenamiento de intervalos de potencia simulando tres grandes picos alpinos consecutivos.",
+                intervals: [
+                    { name: "Calentamiento", duration: 300, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Pico 1: Cuesta Constante", duration: 240, res: 6, rpm: 70, type: "work" },
+                    { name: "Descenso y Recuperación", duration: 120, res: 3, rpm: 85, type: "recovery" },
+                    { name: "Pico 2: Mayor Inclinación", duration: 300, res: 7, rpm: 65, type: "work" },
+                    { name: "Descenso y Recuperación", duration: 180, res: 4, rpm: 85, type: "recovery" },
+                    { name: "Pico 3: El Muro de Piedra", duration: 240, res: 9, rpm: 55, type: "work" },
+                    { name: "Descenso Rápido", duration: 120, res: 3, rpm: 90, type: "recovery" },
+                    { name: "Enfriamiento de Recuperación", duration: 300, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+
+            // CATEGORÍA: FONDO / CARDIO
+            aerobico: {
+                title: "Fondo Aeróbico / Resistencia",
+                category: "fondo",
+                description: "Mantiene un esfuerzo constante, ideal para desarrollar gran capacidad cardiovascular.",
+                intervals: [
+                    { name: "Calentamiento Lento", duration: 300, res: 3, rpm: 85, type: "warmup" },
+                    { name: "Ritmo Crucero Fijo", duration: 1200, res: 5, rpm: 90, type: "work" },
+                    { name: "Enfriamiento Paulatino", duration: 300, res: 2, rpm: 80, type: "cooldown" }
+                ]
+            },
+            aerobico_largo: {
+                title: "Fondo Quema-Grasas Zona 2",
+                category: "fondo",
+                description: "Sesión prolongada de baja intensidad ideal para la máxima optimización metabólica de grasas.",
+                intervals: [
+                    { name: "Activación Metabólica", duration: 300, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Bloque Estable Zona 2", duration: 1800, res: 4, rpm: 85, type: "work" },
+                    { name: "Enfriamiento", duration: 300, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            },
+            aerobico_dinamico: {
+                title: "Ondas Aeróbicas Dinámicas",
+                category: "fondo",
+                description: "Resistencia aeróbica con cambios frecuentes de cadencia y resistencia para mantener la mente activa y evitar el aburrimiento.",
+                intervals: [
+                    { name: "Calentamiento Progresivo", duration: 300, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Fase 1: Cadencia Ágil", duration: 180, res: 4, rpm: 95, type: "work" },
+                    { name: "Fase 2: Carga de Fuerza", duration: 180, res: 6, rpm: 75, type: "work" },
+                    { name: "Descanso Activo", duration: 120, res: 3, rpm: 80, type: "recovery" },
+                    { name: "Fase 3: Ritmo Crucero", duration: 300, res: 5, rpm: 85, type: "work" },
+                    { name: "Fase 4: Sprint Controlado", duration: 120, res: 4, rpm: 100, type: "work" },
+                    { name: "Descanso Activo", duration: 120, res: 3, rpm: 80, type: "recovery" },
+                    { name: "Fase 5: Colina Final", duration: 180, res: 7, rpm: 70, type: "work" },
+                    { name: "Enfriamiento y Relax", duration: 300, res: 2, rpm: 75, type: "cooldown" }
+                ]
+            }
+        };
+
+        // --- 2. VARIABLES DE ESTADO DE LA APP ---
+        let currentRoutineKey = 'principiante';
+        let customRoutine = { title: "Rutina Creada por Mí", category: "personalizado", description: "Rutina personalizada con intervalos ajustados por el usuario.", intervals: [] };
+        let activeRoutine = null;
+        let selectedCategoryFilter = 'all';
+        
+        let activeIntervalIndex = 0;
+        let activeIntervalTimeLeft = 0;
+        let activeRoutineTotalTime = 0;
+        let globalTimeElapsed = 0;
+        
+        let workoutTimerInterval = null;
+        let isPaused = true;
+        
+        // Configuración de audio
+        let soundOn = true;
+        let tickSoundOn = true;
+        let countdownSoundOn = true;
+        let volume = 0.8;
+
+        // Metrónomo Sincronizado
+        let wheelRotationAngle = 0;
+        let lastFrameTime = null;
+        let animationFrameId = null;
+
+        // Doble Protección de Pantalla Encendida
+        let wakeLock = null;
+        let fallbackVideo = null;
+        let fallbackCanvas = null;
+        let fallbackCtx = null;
+        let fallbackIntervalId = null;
+
+        // Estadísticas acumuladas
+        let estimatedCalories = 0;
+        let estimatedDistance = 0;
+
+        // --- 3. AUDIOS SINTETIZADOS (Web Audio API) ---
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Tic de metrónomo - Simulación acústica Woodblock
+        function playTickSound() {
+            if (!soundOn || !tickSoundOn) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1050, ctx.currentTime);
+                gain.gain.setValueAtTime(0.4 * volume, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.045);
+            } catch (e) {
+                console.error("Error en Web Audio API: ", e);
+            }
+        }
+
+        // Tic de cuenta atrás (3, 2, 1)
+        function playCountdownSound() {
+            if (!soundOn || !countdownSoundOn) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(950, ctx.currentTime); 
+                gain.gain.setValueAtTime(0.5 * volume, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (e) {
+                console.error("Error en Web Audio API: ", e);
+            }
+        }
+
+        // Alarma de cambio de fase (Gong de alta energía)
+        function playAlertSound() {
+            if (!soundOn) return;
+            try {
+                const ctx = getAudioContext();
+                const time = ctx.currentTime;
+                
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.type = 'square';
+                osc1.frequency.setValueAtTime(587.33, time);
+                gain1.gain.setValueAtTime(0.45 * volume, time);
+                gain1.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
+                
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880.00, time + 0.12);
+                gain2.gain.setValueAtTime(0.45 * volume, time + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.001, time + 0.45);
+
+                osc1.start(time);
+                osc1.stop(time + 0.3);
+                osc2.start(time + 0.12);
+                osc2.stop(time + 0.5);
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([150, 75, 150]);
+                }
+            } catch (e) {
+                console.error("Error en Web Audio API: ", e);
+            }
+        }
+
+        // Probar altavoces desde configuración
+        function testAppSound() {
+            try {
+                getAudioContext();
+                playAlertSound();
+            } catch(e) {
+                alert("Para habilitar el audio debes interactuar primero con la página.");
+            }
+        }
+
+        // --- 4. GESTIÓN DE VISTAS Y FILTROS ---
+        function filterCategory(category) {
+            selectedCategoryFilter = category;
+            
+            const tabs = {
+                all: 'tab-all',
+                suave: 'tab-suave',
+                hiit: 'tab-hiit',
+                fuerza: 'tab-fuerza',
+                fondo: 'tab-fondo'
+            };
+
+            Object.keys(tabs).forEach(key => {
+                const element = document.getElementById(tabs[key]);
+                if (key === category) {
+                    element.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-cyber-accent text-white border border-cyber-accent";
+                } else {
+                    element.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10";
+                }
+            });
+
+            renderRoutinesList();
+        }
+
+        function renderRoutinesList() {
+            const grid = document.getElementById('routines-grid');
+            grid.innerHTML = '';
+
+            Object.keys(ROUTINES).forEach(key => {
+                const r = ROUTINES[key];
+                
+                if (selectedCategoryFilter !== 'all' && r.category !== selectedCategoryFilter) {
+                    return;
+                }
+
+                let badgeLabel = "Suave";
+                let badgeClass = "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
+                let hoverBorderClass = "hover:border-cyber-blue/30";
+                let textHoverClass = "group-hover:text-cyan-400";
+                let statsColorClass = "text-cyan-400";
+                let maxStrength = "5/10";
+
+                if (r.category === 'hiit') {
+                    badgeLabel = "Muy Intenso";
+                    badgeClass = "bg-red-500/10 text-red-400 border-red-500/20";
+                    hoverBorderClass = "hover:border-cyber-red/30";
+                    textHoverClass = "group-hover:text-red-400";
+                    statsColorClass = "text-red-400";
+                    maxStrength = "8/10";
+                } else if (r.category === 'fuerza') {
+                    badgeLabel = "Fuerza / Escalada";
+                    badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                    hoverBorderClass = "hover:border-cyber-orange/30";
+                    textHoverClass = "group-hover:text-amber-400";
+                    statsColorClass = "text-amber-400";
+                    maxStrength = "9/10";
+                } else if (r.category === 'fondo') {
+                    badgeLabel = "Fondo / Aeróbico";
+                    badgeClass = "bg-violet-500/10 text-violet-400 border-violet-500/20";
+                    hoverBorderClass = "hover:border-cyber-accent/30";
+                    textHoverClass = "group-hover:text-violet-400";
+                    statsColorClass = "text-violet-400";
+                    maxStrength = "5/10";
+                }
+
+                const totalSecs = r.intervals.reduce((acc, curr) => acc + curr.duration, 0);
+                const totalMins = Math.round(totalSecs / 60);
+
+                const card = document.createElement('div');
+                card.className = `group relative bg-cyber-card/60 hover:bg-cyber-card border border-white/5 ${hoverBorderClass} rounded-2xl p-5 cursor-pointer transition-all duration-300 flex flex-col justify-between`;
+                card.onclick = () => selectRoutine(key);
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-full ${badgeClass} border">${badgeLabel}</span>
+                            <span class="text-slate-400 text-sm font-semibold flex items-center gap-1">⏱️ ${totalMins} min</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white ${textHoverClass} transition mb-1">${r.title}</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed">${r.description}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-xs font-semibold ${statsColorClass}">
+                        <span>Fuerza máx: ${maxStrength}</span>
+                        <span class="flex items-center gap-1">Pedalear →</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- 5. GESTIÓN DE PANTALLAS ---
+        function showScreen(screenId) {
+            const screens = ['screen-selector', 'screen-preworkout', 'screen-creator', 'screen-workout', 'screen-summary'];
+            screens.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            
+            const header = document.getElementById('main-header');
+            const footer = document.getElementById('main-footer');
+            
+            if (screenId === 'screen-workout') {
+                header.classList.add('hidden');
+                footer.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+                footer.classList.remove('hidden');
+            }
+
+            document.getElementById(screenId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goBackToSelector() {
+            showScreen('screen-selector');
+        }
+
+        // --- 6. CONFIGURACIÓN DE RUTINAS ---
+        function selectRoutine(key) {
+            currentRoutineKey = key;
+            let routine = null;
+            
+            if (key === 'custom') {
+                routine = customRoutine;
+            } else {
+                routine = ROUTINES[key];
+            }
+            
+            activeRoutine = routine;
+
+            const totalSeconds = routine.intervals.reduce((acc, curr) => acc + curr.duration, 0);
+            
+            document.getElementById('pre-title').innerText = routine.title;
+            document.getElementById('pre-description').innerText = routine.description;
+            document.getElementById('pre-duration').innerText = formatTime(totalSeconds);
+            
+            showScreen('screen-preworkout');
+        }
+
+        // --- 7. CREADOR DE RUTINAS PERSONALIZADAS ---
+        function openCustomCreator() {
+            if (customRoutine.intervals.length === 0) {
+                customRoutine.intervals = [
+                    { name: "Calentamiento", duration: 120, res: 3, rpm: 80, type: "warmup" },
+                    { name: "Trabajo", duration: 180, res: 5, rpm: 90, type: "work" },
+                    { name: "Enfriamiento", duration: 120, res: 2, rpm: 75, type: "cooldown" }
+                ];
+            }
+            renderCustomIntervalsList();
+            showScreen('screen-creator');
+        }
+
+        function renderCustomIntervalsList() {
+            const container = document.getElementById('custom-intervals-list');
+            container.innerHTML = '';
+            
+            customRoutine.intervals.forEach((interval, idx) => {
+                let badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
+                if (interval.type === 'work') badgeColor = "bg-red-500/10 text-red-400 border-red-500/20";
+                if (interval.type === 'recovery') badgeColor = "bg-green-500/10 text-green-400 border-green-500/20";
+                if (interval.type === 'cooldown') badgeColor = "bg-teal-500/10 text-teal-400 border-teal-500/20";
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-sm";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-500 font-mono-custom w-4">${idx + 1}</span>
+                        <div>
+                            <span class="font-bold text-white block">${interval.name}</span>
+                            <div class="flex items-center gap-2 mt-0.5 text-xs">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border ${badgeColor}">${interval.type}</span>
+                                <span class="text-slate-400">⏱️ ${formatTime(interval.duration)}</span>
+                                <span class="text-slate-400">⚙️ Res: ${interval.res}</span>
+                                <span class="text-slate-400">🚲 ${interval.rpm} RPM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="removeCustomInterval(${idx})" class="p-1.5 hover:bg-white/10 rounded text-cyber-red font-bold text-xs" title="Eliminar bloque">
+                        🗑️ Borrar
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addCustomInterval() {
+            const name = document.getElementById('new-int-name').value;
+            const duration = parseInt(document.getElementById('new-int-duration').value) || 60;
+            const res = parseInt(document.getElementById('new-int-res').value) || 5;
+            const rpm = parseInt(document.getElementById('new-int-rpm').value) || 80;
+            const type = document.getElementById('new-int-type').value;
+
+            customRoutine.intervals.push({ name, duration, res, rpm, type });
+            renderCustomIntervalsList();
+        }
+
+        function removeCustomInterval(idx) {
+            customRoutine.intervals.splice(idx, 1);
+            renderCustomIntervalsList();
+        }
+
+        function saveAndGoToPreworkout() {
+            if (customRoutine.intervals.length === 0) {
+                alert("Debes agregar al menos 1 intervalo para guardar tu rutina.");
+                return;
+            }
+            selectRoutine('custom');
+        }
+
+        // --- 8. ARRANQUE DEL ENTRENAMIENTO ---
+        function startWorkout() {
+            tickSoundOn = document.getElementById('cfg-ticks').checked;
+            countdownSoundOn = document.getElementById('cfg-countdown').checked;
+            
+            getAudioContext();
+
+            activeIntervalIndex = 0;
+            globalTimeElapsed = 0;
+            estimatedCalories = 0;
+            estimatedDistance = 0;
+            
+            activeRoutineTotalTime = activeRoutine.intervals.reduce((acc, curr) => acc + curr.duration, 0);
+            
+            isPaused = false;
+            
+            loadInterval(0);
+            
+            showScreen('screen-workout');
+            
+            updateUI();
+            startWorkoutTimerLoop();
+
+            // Configurar e iniciar bucle de metrónomo visual y acústico sincronizado
+            wheelRotationAngle = 0;
+            lastFrameTime = performance.now();
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(updateWheelRotationAndSound);
+            
+            // ACTIVAR LA DOBLE PROTECCIÓN DE PANTALLA ACTIVA
+            startKeepScreenOnLock();
+        }
+
+        function loadInterval(index) {
+            if (index < 0 || index >= activeRoutine.intervals.length) return;
+            
+            activeIntervalIndex = index;
+            const interval = activeRoutine.intervals[index];
+            activeIntervalTimeLeft = interval.duration;
+            
+            document.getElementById('active-routine-name').innerText = activeRoutine.title;
+            document.getElementById('interval-name').innerText = interval.name;
+            document.getElementById('target-rpm').innerText = interval.rpm;
+            document.getElementById('target-resistance').innerText = interval.res;
+            document.getElementById('active-interval-counter').innerText = `${index + 1}/${activeRoutine.intervals.length}`;
+            
+            let typeText = "Trabajo";
+            let circleColor = "#EF4444"; 
+            let textTypeColorClass = "text-cyber-red";
+            
+            if (interval.type === 'warmup') {
+                typeText = "Calentamiento";
+                circleColor = "#06B6D4"; 
+                textTypeColorClass = "text-cyber-blue";
+            } else if (interval.type === 'recovery') {
+                typeText = "Recuperación";
+                circleColor = "#10B981"; 
+                textTypeColorClass = "text-cyber-green";
+            } else if (interval.type === 'cooldown') {
+                typeText = "Enfriamiento";
+                circleColor = "#8B5CF6"; 
+                textTypeColorClass = "text-cyber-accent";
+            }
+
+            const currentStageSpan = document.getElementById('current-stage-type');
+            currentStageSpan.innerText = typeText;
+            currentStageSpan.className = `text-[10px] uppercase font-bold tracking-widest ${textTypeColorClass}`;
+            
+            document.getElementById('circular-progress').setAttribute('stroke', circleColor);
+
+            const nextBanner = document.getElementById('next-interval-banner');
+            if (index + 1 < activeRoutine.intervals.length) {
+                nextBanner.classList.remove('hidden');
+                const next = activeRoutine.intervals[index + 1];
+                document.getElementById('next-interval-name').innerText = `${next.name}`;
+                document.getElementById('next-interval-specs').innerText = `${next.rpm} RPM | Res. ${next.res}`;
+            } else {
+                nextBanner.classList.add('hidden');
+            }
+
+            playAlertSound();
+        }
+
+        // --- 9. TEMPORIZADORES Y LOGICA CENTRAL ---
+        function startWorkoutTimerLoop() {
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            
+            workoutTimerInterval = setInterval(() => {
+                if (isPaused) return;
+
+                activeIntervalTimeLeft--;
+                globalTimeElapsed++;
+                
+                calculateMetricsStep();
+
+                if (activeIntervalTimeLeft <= 0) {
+                    if (activeIntervalIndex + 1 < activeRoutine.intervals.length) {
+                        loadInterval(activeIntervalIndex + 1);
+                    } else {
+                        finishWorkout();
+                    }
+                } else {
+                    if (activeIntervalTimeLeft <= 3 && activeIntervalTimeLeft > 0) {
+                        playCountdownSound();
+                    }
+                }
+
+                updateUI();
+            }, 1000);
+        }
+
+        function updateWheelRotationAndSound(timestamp) {
+            if (!lastFrameTime) lastFrameTime = timestamp;
+            const delta = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+
+            if (!isPaused && activeRoutine) {
+                const currentInterval = activeRoutine.intervals[activeIntervalIndex];
+                const rpm = currentInterval ? currentInterval.rpm : 80;
+                
+                const degreesPerMs = rpm * 0.006;
+                const prevAngle = wheelRotationAngle;
+                
+                wheelRotationAngle = (wheelRotationAngle + (degreesPerMs * delta)) % 360;
+                
+                if (wheelRotationAngle < prevAngle) {
+                    playTickSound();
+                }
+                
+                const wheel = document.getElementById('pedalWheel');
+                if (wheel) {
+                    wheel.style.transform = `rotate(${wheelRotationAngle}deg)`;
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(updateWheelRotationAndSound);
+        }
+
+        function calculateMetricsStep() {
+            const currentInterval = activeRoutine.intervals[activeIntervalIndex];
+            const rpm = currentInterval.rpm;
+            const res = currentInterval.res;
+
+            const speedKmh = (rpm * 0.25) * (1 + (res * 0.05)); 
+            const distanceMetersPerSecond = (speedKmh * 1000) / 3600;
+            estimatedDistance += (distanceMetersPerSecond / 1000);
+
+            const met = 3 + (res * 0.8) + (rpm / 25); 
+            const userWeightKg = 70; 
+            const caloriesPerSecond = (met * 3.5 * userWeightKg / 200) / 60;
+            estimatedCalories += caloriesPerSecond;
+        }
+
+        function updateUI() {
+            document.getElementById('interval-timer').innerText = formatTime(activeIntervalTimeLeft);
+
+            const currentInterval = activeRoutine.intervals[activeIntervalIndex];
+            const percentElapsed = (currentInterval.duration - activeIntervalTimeLeft) / currentInterval.duration;
+            const circleDashoffset = 289 - (289 * percentElapsed);
+            document.getElementById('circular-progress').setAttribute('stroke-dashoffset', circleDashoffset);
+
+            document.getElementById('global-elapsed').innerText = formatTime(globalTimeElapsed);
+            document.getElementById('global-total').innerText = formatTime(activeRoutineTotalTime);
+
+            const globalPercent = (globalTimeElapsed / activeRoutineTotalTime) * 100;
+            document.getElementById('global-progress-bar').style.width = `${Math.min(globalPercent, 100)}%`;
+
+            document.getElementById('stat-calories').innerText = `${Math.round(estimatedCalories)} kcal`;
+            document.getElementById('stat-distance').innerText = `${estimatedDistance.toFixed(2)} km`;
+
+            let effortText = "Suave";
+            const res = currentInterval.res;
+            if (res > 7) effortText = "Extremo 🔥";
+            else if (res > 4) effortText = "Moderado 💪";
+            document.getElementById('stat-effort').innerText = effortText;
+
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            if (isPaused) {
+                playPauseIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+            } else {
+                playPauseIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+            }
+        }
+
+        // --- 10. CONTROLES DE INTERFAZ ---
+        function togglePlayPause() {
+            getAudioContext();
+
+            isPaused = !isPaused;
+            if (!isPaused) {
+                lastFrameTime = performance.now(); 
+                startKeepScreenOnLock(); 
+            } else {
+                stopKeepScreenOnLock(); 
+            }
+            updateUI();
+        }
+
+        function nextInterval() {
+            if (activeIntervalIndex + 1 < activeRoutine.intervals.length) {
+                globalTimeElapsed += activeIntervalTimeLeft; 
+                loadInterval(activeIntervalIndex + 1);
+                updateUI();
+            } else {
+                finishWorkout();
+            }
+        }
+
+        function prevInterval() {
+            if (activeIntervalIndex > 0) {
+                const prevInt = activeRoutine.intervals[activeIntervalIndex - 1];
+                globalTimeElapsed = Math.max(0, globalTimeElapsed - prevInt.duration - (prevInt.duration - activeIntervalTimeLeft));
+                loadInterval(activeIntervalIndex - 1);
+                updateUI();
+            }
+        }
+
+        function openStopConfirmModal() {
+            isPaused = true;
+            updateUI();
+            document.getElementById('stop-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeStopConfirmModal() {
+            document.getElementById('stop-confirm-modal').classList.add('hidden');
+            isPaused = false;
+            lastFrameTime = performance.now();
+            startKeepScreenOnLock();
+            updateUI();
+        }
+
+        function confirmStopWorkout() {
+            document.getElementById('stop-confirm-modal').classList.add('hidden');
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            stopKeepScreenOnLock();
+            showScreen('screen-selector');
+        }
+
+        function finishWorkout() {
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            stopKeepScreenOnLock();
+
+            const avgRes = activeRoutine.intervals.reduce((acc, curr) => acc + curr.res, 0) / activeRoutine.intervals.length;
+
+            document.getElementById('sum-time').innerText = formatTime(globalTimeElapsed);
+            document.getElementById('sum-calories').innerText = `${Math.round(estimatedCalories)} kcal`;
+            document.getElementById('sum-distance').innerText = `${estimatedDistance.toFixed(2)} km`;
+            document.getElementById('sum-effort').innerText = `Fuerza ${avgRes.toFixed(1)}/10`;
+
+            showScreen('screen-summary');
+        }
+
+        // --- 11. CONFIGURACIONES GENERALES ---
+        function toggleSound() {
+            soundOn = !soundOn;
+            const soundIcon = document.getElementById('soundIcon');
+            const soundText = document.getElementById('soundText');
+            
+            if (soundOn) {
+                soundIcon.innerText = "🔊";
+                soundText.innerText = "Sonido ON";
+            } else {
+                soundIcon.innerText = "🔇";
+                soundText.innerText = "Mute";
+            }
+        }
+
+        // --- 12. FUNCIONES AUXILIARES ---
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // --- 13. DOBLE SISTEMA ANTIBLOQUEO / APAGADO DE PANTALLA ---
+        
+        async function startKeepScreenOnLock() {
+            // Método 1: Intentar Wake Lock API Nativo del Navegador
+            if ('wakeLock' in navigator) {
+                try {
+                    if (!wakeLock) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        console.log("Wake Lock API: Bloqueo activo.");
+                        
+                        wakeLock.addEventListener('release', () => {
+                            console.log("Wake Lock API: Bloqueo liberado externamente.");
+                            wakeLock = null;
+                        });
+                    }
+                } catch (err) {
+                    console.warn(`Wake Lock API no disponible: ${err.message}. Activando respaldo.`);
+                }
+            }
+
+            // Método 2 (Respaldo Infalible): Render de Video Loop Dinámico Invisible
+            try {
+                if (!fallbackVideo) {
+                    // 1. Crear lienzo invisible
+                    fallbackCanvas = document.createElement('canvas');
+                    fallbackCanvas.width = 16;
+                    fallbackCanvas.height = 16;
+                    fallbackCtx = fallbackCanvas.getContext('2d');
+                    fallbackCtx.fillStyle = 'rgba(0,0,0,0.1)';
+                    fallbackCtx.fillRect(0, 0, 16, 16);
+
+                    // 2. Capturar stream dinámico (1 Frame por segundo)
+                    const stream = fallbackCanvas.captureStream(1);
+
+                    // 3. Crear reproductor oculto
+                    fallbackVideo = document.createElement('video');
+                    fallbackVideo.style.position = 'absolute';
+                    fallbackVideo.style.pointerEvents = 'none';
+                    fallbackVideo.style.opacity = '0.001';
+                    fallbackVideo.style.width = '1px';
+                    fallbackVideo.style.height = '1px';
+                    fallbackVideo.srcObject = stream;
+                    fallbackVideo.muted = true;
+                    fallbackVideo.playsInline = true;
+                    fallbackVideo.loop = true;
+
+                    document.body.appendChild(fallbackVideo);
+
+                    // 4. Modificar el lienzo cíclicamente para mantener la transmisión viva
+                    if (fallbackIntervalId) clearInterval(fallbackIntervalId);
+                    fallbackIntervalId = setInterval(() => {
+                        if (!isPaused && fallbackCtx) {
+                            fallbackCtx.clearRect(0, 0, 16, 16);
+                            fallbackCtx.fillStyle = `rgba(0, 0, 0, ${0.05 + Math.random() * 0.05})`;
+                            fallbackCtx.fillRect(0, 0, 16, 16);
+                        }
+                    }, 1000);
+                }
+
+                // Reproducir el video de respaldo
+                fallbackVideo.play().catch(e => {
+                    console.warn("Reproducción de respaldo detenida o bloqueada: ", e);
+                });
+                console.log("Respaldo por bucle multimedia: Activo.");
+            } catch (err) {
+                console.error("El sistema de respaldo de video no pudo iniciarse: ", err);
+            }
+        }
+
+        async function stopKeepScreenOnLock() {
+            // Detener Wake Lock Nativo
+            if (wakeLock) {
+                try {
+                    await wakeLock.release();
+                } catch(e){}
+                wakeLock = null;
+            }
+
+            // Pausar simulador de video
+            if (fallbackVideo) {
+                try {
+                    fallbackVideo.pause();
+                } catch(e){}
+            }
+        }
+
+        // Control de re-activación al reenfocar la ventana
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && !isPaused && activeRoutine) {
+                console.log("La ventana vuelve a ser visible. Reactivando antibloqueo...");
+                await startKeepScreenOnLock();
+            }
+        });
+
+        window.onload = function() {
+            renderRoutinesList();
+            showScreen('screen-selector');
+        }
+    </script>
+</body>
+</html>
