@@ -4,8 +4,19 @@ test.describe('CicloRitmo', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(500);
+    // Clear persisted state so each test starts deterministic
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForTimeout(400);
   });
+
+  // Helper: wait for the 3-2-1 countdown to finish and the workout UI to appear.
+  // Call this right after clicking "INICIAR ENTRENAMIENTO".
+  async function waitForWorkoutStart(page) {
+    // Countdown overlay shows 3,2,1 then the workout UI
+    await page.locator('text=Cadencia').waitFor({ state: 'attached', timeout: 6000 });
+    await page.waitForTimeout(100);
+  }
 
   test('1. screen navigation: selector visible, other screens not mounted', async ({ page }) => {
     await expect(page.locator('text=A pedalear hoy')).toBeAttached();
@@ -80,7 +91,10 @@ test.describe('CicloRitmo', () => {
     await page.waitForTimeout(150);
 
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    // Countdown overlay should be visible first
+    await expect(page.locator('text=Prepárate')).toBeAttached();
+
+    await waitForWorkoutStart(page);
 
     await expect(page.locator('text=Parar')).toBeAttached();
     await expect(page.locator('text=Cadencia')).toBeAttached();
@@ -90,7 +104,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     await expect(page.locator('text=CicloRitmo')).not.toBeAttached();
   });
@@ -99,7 +113,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     const playPause = page.locator('button').filter({ has: page.locator('svg') }).nth(2);
     await expect(playPause).toBeAttached();
@@ -123,7 +137,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     await page.locator('text=Parar').click();
     await page.waitForTimeout(150);
@@ -142,7 +156,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     await page.locator('text=Parar').click();
     await page.waitForTimeout(150);
@@ -183,7 +197,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(300);
+    await waitForWorkoutStart(page);
 
     // Iniciación al Cardio has 7 intervals; click next 7 times to finish
     const nextBtn = page.locator('button.rounded-full').last();
@@ -202,7 +216,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     const metronomeArea = page.locator('.relative.w-20');
     await expect(metronomeArea.locator('svg').first()).toBeAttached();
@@ -242,7 +256,7 @@ test.describe('CicloRitmo', () => {
     await page.locator('text=Iniciación al Cardio').click();
     await page.waitForTimeout(150);
     await page.locator('text=INICIAR ENTRENAMIENTO').click();
-    await page.waitForTimeout(200);
+    await waitForWorkoutStart(page);
 
     const nextBtn = page.locator('button.rounded-full').last();
     for (let i = 0; i < 7; i++) {

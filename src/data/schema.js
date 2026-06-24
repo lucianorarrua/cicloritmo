@@ -89,11 +89,11 @@ export const POSITION_LABELS = {
 // ═══════════════════════════════════════════
 
 export const CATEGORIES = [
-  { key: 'all',    label: 'Todos' },
-  { key: 'suave',  label: 'Suave / Iniciación' },
-  { key: 'hiit',   label: 'HIIT / Tabata' },
-  { key: 'fuerza', label: 'Fuerza / Escalada' },
-  { key: 'fondo',  label: 'Fondo / Cardio' },
+  { key: 'all',    label: 'Todos',                 color: 'bg-clay-ink',                  textColor: 'text-clay-on-primary' },
+  { key: 'suave',  label: 'Suave / Iniciación',    color: 'bg-clay-brand-lavender',       textColor: 'text-clay-ink' },
+  { key: 'hiit',   label: 'HIIT / Tabata',         color: 'bg-clay-brand-pink',           textColor: 'text-white' },
+  { key: 'fuerza', label: 'Fuerza / Escalada',     color: 'bg-clay-brand-teal',           textColor: 'text-white' },
+  { key: 'fondo',  label: 'Fondo / Cardio',        color: 'bg-clay-brand-peach',          textColor: 'text-clay-ink' },
 ];
 
 export const CATEGORY_META = {

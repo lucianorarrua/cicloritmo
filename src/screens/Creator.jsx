@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { useApp, SCREENS } from '../state/store.jsx';
 import {
   TYPE_BADGES, TYPE_LABELS, TYPE_ACCENT,
@@ -47,6 +47,15 @@ export function Creator() {
   const [rpm, setRpm] = useState(85);
   const [type, setType] = useState('work');
   const [position, setPosition] = useState('sentado');
+  const [manualCategory, setManualCategory] = useState(customRoutine.category || 'suave');
+
+  // Keep local manualCategory in sync if the custom routine's category changes
+  // (e.g. after an AI-generated routine is loaded).
+  useEffect(() => {
+    if (customRoutine.category && customRoutine.category !== manualCategory) {
+      setManualCategory(customRoutine.category);
+    }
+  }, [customRoutine.category]);
 
   // ── AI mode state ──
   const [activeTab, setActiveTab] = useState(aiAvailable ? 'ai' : 'manual');
@@ -70,7 +79,19 @@ export function Creator() {
       alert('Debes agregar al menos 1 intervalo');
       return;
     }
-    actions.selectRoutine('custom');
+    // Ensure the custom routine has the selected category + a sensible title/description
+    actions.setCustomRoutineField('category', manualCategory);
+    const meta = CATEGORY_META[manualCategory];
+    if (meta && (!customRoutine.title || customRoutine.title === 'Rutina Creada por Mí')) {
+      actions.setCustomRoutineField('title', 'Rutina Personalizada');
+    }
+    if (!customRoutine.description || customRoutine.description === 'Rutina personalizada con intervalos ajustados por el usuario.') {
+      actions.setCustomRoutineField('description', 'Rutina personalizada creada por ti.');
+    }
+    // Persist into saved custom routines and select it by id
+    const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    actions.saveCustomRoutine(id);
+    actions.selectRoutine('custom:' + id);
   }
 
   function togglePosition(pos) {
@@ -166,6 +187,30 @@ export function Creator() {
       {/* ── Manual mode ── */}
       {activeTab === 'manual' && (
         <>
+          {/* Category selector */}
+          <div>
+            <label class={labelClass()}>Categor&iacute;a de la rutina</label>
+            <div class="flex flex-wrap gap-2">
+              {CORE_CATEGORIES.map(cat => {
+                const meta = CATEGORY_META[cat.key];
+                const active = manualCategory === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    onClick={() => { setManualCategory(cat.key); actions.setCustomRoutineField('category', cat.key); }}
+                    class={`px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 border ${
+                      active
+                        ? `${meta?.color || 'bg-clay-ink'} ${meta?.textColor || 'text-white'} border-transparent shadow-[0_2px_8px_rgba(10,10,10,0.1)]`
+                        : 'bg-clay-canvas text-clay-muted border-clay-hairline hover:border-clay-ink/30'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Interval list */}
           <div class="flex-1 min-h-0 flex flex-col">
             <div class="flex items-stretch justify-between mb-2.5 min-h-[28px]">

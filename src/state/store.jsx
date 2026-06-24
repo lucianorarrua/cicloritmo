@@ -1,9 +1,50 @@
 import { createContext } from 'preact';
-import { useContext, useReducer, useCallback } from 'preact/hooks';
+import { useContext, useReducer, useCallback, useEffect } from 'preact/hooks';
 import { ROUTINES } from '../data/routines.js';
 import { SCREENS } from '../data/schema.js';
 
 const AppContext = createContext(null);
+
+// ──────────────────────────────────────────────
+//  LocalStorage persistence
+// ──────────────────────────────────────────────
+const STORAGE_KEYS = {
+  customRoutines:    'cr_custom_routines',
+  customRoutine:     'cr_custom_routine',
+  soundOn:           'cr_sound_on',
+  tickSoundOn:       'cr_tick_sound_on',
+  countdownSoundOn:  'cr_countdown_sound_on',
+  volume:            'cr_volume',
+};
+
+function safeParse(raw, fallback) {
+  if (!raw) return fallback;
+  try { return JSON.parse(raw); } catch { return fallback; }
+}
+
+function loadPersistedState() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return {};
+  }
+  const ls = window.localStorage;
+  return {
+    customRoutines:    safeParse(ls.getItem(STORAGE_KEYS.customRoutines), []),
+    customRoutine:     safeParse(ls.getItem(STORAGE_KEYS.customRoutine), null),
+    soundOn:           ls.getItem(STORAGE_KEYS.soundOn) === null ? true : ls.getItem(STORAGE_KEYS.soundOn) === 'true',
+    tickSoundOn:       ls.getItem(STORAGE_KEYS.tickSoundOn) === null ? true : ls.getItem(STORAGE_KEYS.tickSoundOn) === 'true',
+    countdownSoundOn:  ls.getItem(STORAGE_KEYS.countdownSoundOn) === null ? true : ls.getItem(STORAGE_KEYS.countdownSoundOn) === 'true',
+    volume:            ls.getItem(STORAGE_KEYS.volume) === null ? 0.8 : Number(ls.getItem(STORAGE_KEYS.volume)),
+  };
+}
+
+const persisted = loadPersistedState();
+
+const DEFAULT_CUSTOM_ROUTINE = {
+  title: "Rutina Creada por Mí",
+  category: "suave",
+  description: "Rutina personalizada con intervalos ajustados por el usuario.",
+  intervals: []
+};
 
 const initialState = {
   screen: SCREENS.SELECTOR,
@@ -16,19 +57,28 @@ const initialState = {
   globalTimeElapsed: 0,
   isPaused: true,
   isWorkoutActive: false,
-  soundOn: true,
-  tickSoundOn: true,
-  countdownSoundOn: true,
-  volume: 0.8,
+  soundOn:           persisted.soundOn ?? true,
+  tickSoundOn:       persisted.tickSoundOn ?? true,
+  countdownSoundOn:  persisted.countdownSoundOn ?? true,
+  volume:            persisted.volume ?? 0.8,
   estimatedCalories: 0,
   estimatedDistance: 0,
-  customRoutine: {
-    title: "Rutina Creada por Mí",
-    category: "personalizado",
-    description: "Rutina personalizada con intervalos ajustados por el usuario.",
-    intervals: []
-  },
+  customRoutine:     persisted.customRoutine || { ...DEFAULT_CUSTOM_ROUTINE },
+  customRoutines:    persisted.customRoutines || [],
 };
+
+// Helper: look up a routine by key across built-ins and saved custom routines
+function findRoutineByKey(state, key) {
+  if (key === 'custom') {
+    return state.customRoutine;
+  }
+  // Saved custom routines use a "custom:..." key prefix
+  if (typeof key === 'string' && key.indexOf('custom:') === 0) {
+    const id = key.slice('custom:'.length);
+    return state.customRoutines.find(r => r.id === id);
+  }
+  return ROUTINES[key];
+}
 
 function appReducer(state, action) {
   switch (action.type) {
@@ -39,9 +89,8 @@ function appReducer(state, action) {
       return { ...state, categoryFilter: action.category };
 
     case 'SELECT_ROUTINE': {
-      const routine = action.key === 'custom'
-        ? state.customRoutine
-        : ROUTINES[action.key];
+      const routine = findRoutineByKey(state, action.key);
+      if (!routine) return state;
       const totalTime = routine.intervals.reduce((acc, c) => acc + c.duration, 0);
       return {
         ...state,
@@ -186,6 +235,7 @@ function appReducer(state, action) {
         estimatedCalories: state.estimatedCalories + action.calories,
       };
 
+    // ── Custom routine (editing area) ──
     case 'ADD_CUSTOM_INTERVAL':
       return {
         ...state,
@@ -212,6 +262,31 @@ function appReducer(state, action) {
     case 'SET_CUSTOM_ROUTINE':
       return { ...state, customRoutine: action.routine };
 
+    case 'SET_CUSTOM_ROUTINE_FIELD':
+      return {
+        ...state,
+        customRoutine: { ...state.customRoutine, [action.field]: action.value },
+      };
+
+    case 'RESET_CUSTOM_ROUTINE':
+      return { ...state, customRoutine: { ...DEFAULT_CUSTOM_ROUTINE } };
+
+    // ── Saved custom routines (persisted) ──
+    case 'SAVE_CUSTOM_ROUTINE': {
+      const id = action.id || ('custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+      const routine = { ...state.customRoutine, id };
+      return {
+        ...state,
+        customRoutines: [...state.customRoutines, routine],
+      };
+    }
+
+    case 'DELETE_CUSTOM_ROUTINE':
+      return {
+        ...state,
+        customRoutines: state.customRoutines.filter(r => r.id !== action.id),
+      };
+
     case 'RESET_WORKOUT_STATE':
       return {
         ...state,
@@ -230,6 +305,28 @@ function appReducer(state, action) {
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Persist relevant state slices to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const ls = window.localStorage;
+    ls.setItem(STORAGE_KEYS.customRoutines, JSON.stringify(state.customRoutines));
+  }, [state.customRoutines]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const ls = window.localStorage;
+    ls.setItem(STORAGE_KEYS.customRoutine, JSON.stringify(state.customRoutine));
+  }, [state.customRoutine]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const ls = window.localStorage;
+    ls.setItem(STORAGE_KEYS.soundOn, String(state.soundOn));
+    ls.setItem(STORAGE_KEYS.tickSoundOn, String(state.tickSoundOn));
+    ls.setItem(STORAGE_KEYS.countdownSoundOn, String(state.countdownSoundOn));
+    ls.setItem(STORAGE_KEYS.volume, String(state.volume));
+  }, [state.soundOn, state.tickSoundOn, state.countdownSoundOn, state.volume]);
 
   const actions = {
     setScreen: useCallback((screen) => dispatch({ type: 'SET_SCREEN', screen }), []),
@@ -258,6 +355,11 @@ export function AppProvider({ children }) {
       dispatch({ type: 'SET_CUSTOM_INTERVALS', intervals }), []),
     setCustomRoutine: useCallback((routine) =>
       dispatch({ type: 'SET_CUSTOM_ROUTINE', routine }), []),
+    setCustomRoutineField: useCallback((field, value) =>
+      dispatch({ type: 'SET_CUSTOM_ROUTINE_FIELD', field, value }), []),
+    resetCustomRoutine: useCallback(() => dispatch({ type: 'RESET_CUSTOM_ROUTINE' }), []),
+    saveCustomRoutine: useCallback((id) => dispatch({ type: 'SAVE_CUSTOM_ROUTINE', id }), []),
+    deleteCustomRoutine: useCallback((id) => dispatch({ type: 'DELETE_CUSTOM_ROUTINE', id }), []),
     resetWorkoutState: useCallback(() => dispatch({ type: 'RESET_WORKOUT_STATE' }), []),
   };
 

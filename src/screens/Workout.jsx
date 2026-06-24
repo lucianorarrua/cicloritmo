@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useApp } from '../state/store.jsx';
 import { PHASE_DISPLAY, POSITION_DISPLAY, POSITION_LABELS, getEffortLevel, getPhaseInfo } from '../data/schema.js';
 import { MetronomeWheel } from '../components/MetronomeWheel.jsx';
@@ -18,15 +18,37 @@ export function Workout() {
 
   const { activeRoutine } = state;
 
-  // Initialise first interval timer
+  // ── Pre-workout 3-2-1 countdown ──
+  const [countdown, setCountdown] = useState(3);
+
   useEffect(() => {
+    if (countdown <= 0) return;
+    const s = stateRef.current;
+    // Play countdown beep for 3, 2 (distinct from the final "go" alert)
+    if (countdown === 3 || countdown === 2) {
+      playCountdownSound(s.soundOn, s.countdownSoundOn, s.volume);
+    }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  // Play the "GO" alert when the countdown finishes
+  useEffect(() => {
+    if (countdown !== 0) return;
+    const s = stateRef.current;
+    playAlertSound(s.soundOn, s.volume);
+  }, [countdown]);
+
+  // Initialise first interval timer (only after countdown finishes)
+  useEffect(() => {
+    if (countdown !== 0) return;
     if (state.isWorkoutActive && activeRoutine && state.activeIntervalTimeLeft === 0) {
       const first = activeRoutine.intervals[0];
       if (first && first.duration > 0) {
         actions.setIntervalTime(first.duration);
       }
     }
-  }, [state.isWorkoutActive]);
+  }, [countdown, state.isWorkoutActive]);
 
   // Keep screen awake
   useEffect(() => {
@@ -38,8 +60,9 @@ export function Workout() {
     return () => { stopKeepScreenOnLock(); };
   }, []);
 
-  // Timer heartbeat
+  // Timer heartbeat (only after countdown finishes)
   useEffect(() => {
+    if (countdown !== 0) return;
     if (!state.isWorkoutActive) return;
 
     const timer = setInterval(() => {
@@ -98,6 +121,35 @@ export function Workout() {
       window._openStopConfirmModal();
     }
   };
+
+  // ── Pre-workout 3-2-1 countdown overlay ──
+  if (countdown > 0) {
+    return (
+      <div class="h-full flex flex-col items-center justify-center bg-clay-canvas select-none overflow-hidden">
+        <div class="text-center">
+          <p class="text-xs font-semibold text-clay-muted uppercase tracking-[0.2em] mb-6">
+            Prepárate
+          </p>
+          <div
+            key={countdown}
+            class="font-mono font-bold text-clay-ink tabular-nums leading-none select-none text-[9rem] sm:text-[11rem] countdown-pop"
+          >
+            {countdown}
+          </div>
+          <p class="text-sm text-clay-muted mt-6">Iniciando en {countdown}...</p>
+        </div>
+        <button
+          onClick={handleStop}
+          class="mt-10 flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-clay-muted bg-clay-surface-soft border border-clay-hairline rounded-full hover:bg-clay-hairline active:bg-clay-hairline transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+          <span>Cancelar</span>
+        </button>
+      </div>
+    );
+  }
 
   // Loading / error states
   if (!activeRoutine) {

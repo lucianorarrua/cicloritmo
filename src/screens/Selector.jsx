@@ -11,6 +11,12 @@ const SparkleIcon = () => (
   </svg>
 );
 
+const StarBadge = () => (
+  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z" />
+  </svg>
+);
+
 function getTotalMinutes(routine) {
   const totalSeconds = routine.intervals.reduce((acc, i) => acc + i.duration, 0);
   return Math.round(totalSeconds / 60);
@@ -18,16 +24,25 @@ function getTotalMinutes(routine) {
 
 export function Selector() {
   const { state, actions } = useApp();
-  const { categoryFilter, customRoutine } = state;
+  const { categoryFilter, customRoutine, customRoutines } = state;
 
-  const entries = Object.entries(ROUTINES);
-  const filteredEntries = entries.filter(([_, r]) => {
+  // Build the combined list of routines: built-ins + saved custom routines.
+  // Built-ins use their slug as key; custom saved routines use "custom:<id>".
+  const builtinEntries = Object.entries(ROUTINES).map(([key, r]) => ({ key, routine: r, isCustom: false }));
+  const customEntries = customRoutines.map(r => ({ key: 'custom:' + r.id, routine: r, isCustom: true }));
+
+  const allEntries = [...builtinEntries, ...customEntries];
+  const filteredEntries = allEntries.filter(({ routine }) => {
     if (categoryFilter === 'all') return true;
-    return r.category === categoryFilter;
+    return routine.category === categoryFilter;
   });
 
-  const showCustom = categoryFilter === 'all' && customRoutine.intervals.length > 0;
   const aiAvailable = isAiEnabled();
+
+  const handleDelete = (e, id) => {
+    e.stopPropagation();
+    actions.deleteCustomRoutine(id);
+  };
 
   return (
     <div class="flex flex-col gap-5 pb-6">
@@ -41,76 +56,72 @@ export function Selector() {
 
       {/* Category pills */}
       <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 px-0.5">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => actions.setCategoryFilter(cat.key)}
-            class={`shrink-0 px-4 py-2 text-[13px] font-semibold rounded-full transition-all duration-200 ${
-              categoryFilter === cat.key
-                ? 'bg-clay-ink text-clay-on-primary shadow-sm'
-                : 'text-clay-muted hover:text-clay-ink hover:bg-clay-surface-soft'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const active = categoryFilter === cat.key;
+          const activeClasses = cat.color && cat.textColor
+            ? `${cat.color} ${cat.textColor} shadow-sm`
+            : 'bg-clay-ink text-clay-on-primary shadow-sm';
+          return (
+            <button
+              key={cat.key}
+              onClick={() => actions.setCategoryFilter(cat.key)}
+              class={`shrink-0 px-4 py-2 text-[13px] font-semibold rounded-full transition-all duration-200 ${
+                active
+                  ? activeClasses
+                  : 'text-clay-muted hover:text-clay-ink hover:bg-clay-surface-soft'
+              }`}
+            >
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Routine feature cards */}
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        {filteredEntries.map(([key, routine], idx) => {
-          const meta = CATEGORY_META[routine.category];
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {filteredEntries.map(({ key, routine, isCustom }) => {
+          const meta = CATEGORY_META[routine.category] || CATEGORY_META.suave;
           const minutes = getTotalMinutes(routine);
           return (
             <div
               key={key}
               onClick={() => actions.selectRoutine(key)}
-              class={`${meta.color} ${meta.textColor} rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.97] transition-transform duration-150`}
+              class={`group relative ${meta.color} ${meta.textColor} rounded-2xl p-3.5 sm:p-4 cursor-pointer flex flex-col justify-between min-h-[120px] active:scale-[0.97] transition-transform duration-150`}
             >
+              {/* Delete button for custom routines */}
+              {isCustom && (
+                <button
+                  onClick={(e) => handleDelete(e, routine.id)}
+                  class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/15 hover:bg-black/25 flex items-center justify-center transition-colors z-10"
+                  title="Borrar rutina"
+                  aria-label="Borrar rutina"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
               <div>
-                <div class="flex justify-between items-start gap-2">
-                  <span class={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${meta.badgeClass}`}>
-                    {meta.badge}
+                <div class="flex justify-between items-start gap-2 pr-6">
+                  <span class={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border inline-flex items-center gap-1 ${meta.badgeClass}`}>
+                    {isCustom && <StarBadge />}
+                    {isCustom ? 'Tuya' : meta.badge}
                   </span>
                   <span class="text-[11px] opacity-75 font-medium tabular-nums">{minutes} min</span>
                 </div>
-                <h3 class="text-base font-bold mt-2 leading-tight">{routine.title}</h3>
-                <p class="text-[11px] mt-1 opacity-80 leading-relaxed">{routine.description}</p>
+                <h3 class="text-[15px] font-bold mt-1.5 leading-tight">{routine.title}</h3>
+                <p class="text-[11px] mt-1 opacity-80 leading-relaxed line-clamp-2">{routine.description}</p>
               </div>
-              <div class="flex justify-between items-end mt-3 pt-1">
-                <span class="text-[10px] opacity-70 font-medium">Max {meta.maxStrength}</span>
+              <div class="flex justify-between items-end mt-2 pt-1">
+                <span class="text-[10px] opacity-70 font-medium">{isCustom ? 'Personalizada' : `Max ${meta.maxStrength}`}</span>
                 <span class="text-[11px] font-semibold">
-                  Pedalear <span class="ml-0.5">→</span>
+                  Pedalear <span class="ml-0.5">&rarr;</span>
                 </span>
               </div>
             </div>
           );
         })}
-
-        {/* Custom routine card (ochre) */}
-        {showCustom && (
-          <div
-            onClick={() => actions.selectRoutine('custom')}
-            class="card-ochre rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.97] transition-transform duration-150"
-          >
-            <div>
-              <div class="flex justify-between items-start gap-2">
-                <span class="text-[10px] px-2.5 py-0.5 rounded-full font-semibold border bg-clay-canvas/30 text-clay-ink border-clay-ink/20">
-                  Personalizado
-                </span>
-                <span class="text-[11px] opacity-75 font-medium tabular-nums">{getTotalMinutes(customRoutine)} min</span>
-              </div>
-              <h3 class="text-base font-bold mt-2 leading-tight">{customRoutine.title}</h3>
-              <p class="text-[11px] mt-1 opacity-80 leading-relaxed">{customRoutine.description}</p>
-            </div>
-            <div class="flex justify-between items-end mt-3 pt-1">
-              <span class="text-[10px] opacity-70 font-medium">A tu medida</span>
-              <span class="text-[11px] font-semibold">
-                Pedalear <span class="ml-0.5">→</span>
-              </span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Custom builder CTA */}
@@ -133,7 +144,7 @@ export function Selector() {
       </div>
 
       {/* Empty state for filtered categories */}
-      {filteredEntries.length === 0 && !showCustom && (
+      {filteredEntries.length === 0 && (
         <div class="text-center py-12">
           <p class="text-clay-muted text-sm">No hay rutinas en esta categor&iacute;a.</p>
           <button

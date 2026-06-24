@@ -150,6 +150,17 @@ body {
   animation: urgentPulse 0.5s ease-in-out infinite;
 }
 
+/* ── Pre-workout countdown pop ── */
+@keyframes countdownPop {
+  0%   { opacity: 0; transform: scale(0.4); }
+  40%  { opacity: 1; transform: scale(1.15); }
+  60%  { transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.countdown-pop {
+  animation: countdownPop 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ── Interval transition flash ── */
 @keyframes intervalFlash {
   0%   { opacity: 0.5; transform: scale(0.96); }
