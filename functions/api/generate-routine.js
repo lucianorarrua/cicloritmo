@@ -7,6 +7,7 @@
 
 import { buildSystemPrompt, buildUserPrompt } from '../_lib/prompt-builder.js';
 import { openaiGenerate } from '../_lib/providers/openai.js';
+import { checkRateLimit, getClientIp } from '../_lib/rate-limit.js';
 
 const VALID_CATEGORIES = ['suave', 'hiit', 'fuerza', 'fondo'];
 const VALID_FOCUS = ['resistencia', 'cadencia', 'mixto'];
@@ -34,6 +35,14 @@ function validatePreferences(p) {
   for (const pos of p.position_preference) {
     if (!VALID_POSITIONS.includes(pos)) {
       return `position_preference contiene un valor inválido: "${pos}". Válidos: ${VALID_POSITIONS.join(',')}.`;
+    }
+  }
+  if (p.extra_instructions !== undefined && p.extra_instructions !== null) {
+    if (typeof p.extra_instructions !== 'string') {
+      return 'extra_instructions debe ser un string.';
+    }
+    if (p.extra_instructions.length > 500) {
+      return 'extra_instructions no puede superar los 500 caracteres.';
     }
   }
   return null;
@@ -167,6 +176,16 @@ async function tryGenerate(preferences, env, maxRetries) {
 export async function onRequestPost(context) {
   const { request, env } = context;
   const cResp = corsHeaders(request);
+
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(env, ip);
+  if (!rl.allowed) {
+    return jsonResponse(
+      { error: `Demasiadas solicitudes. Límite de ${rl.max} por ${rl.limit === 'minute' ? 'minuto' : 'hora'}. Reintenta en ${rl.retryAfter}s.` },
+      429,
+      { ...cResp, 'Retry-After': String(rl.retryAfter) },
+    );
+  }
 
   let body;
   try {

@@ -14,3 +14,9 @@ AI_MODEL = "gpt-4o-mini"
 # OPENAI_API_KEY debe configurarse como secreto:
 #   npx wrangler pages secret put OPENAI_API_KEY
 # O desde Cloudflare Dashboard → Workers & Pages → cicloritmo → Settings → Secrets
+
+# KV namespace para rate limiting del endpoint IA.
+# Crear con: npx wrangler kv namespace create RATE_LIMIT
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "2892942980e7422289e11305fc501685"
