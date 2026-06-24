@@ -1,16 +1,9 @@
 import { createContext } from 'preact';
 import { useContext, useReducer, useCallback } from 'preact/hooks';
 import { ROUTINES } from '../data/routines.js';
+import { SCREENS } from '../data/schema.js';
 
 const AppContext = createContext(null);
-
-const SCREENS = {
-  SELECTOR: 'selector',
-  PREWORKOUT: 'preworkout',
-  CREATOR: 'creator',
-  WORKOUT: 'workout',
-  SUMMARY: 'summary',
-};
 
 const initialState = {
   screen: SCREENS.SELECTOR,

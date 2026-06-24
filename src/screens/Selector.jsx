@@ -1,5 +1,6 @@
 import { useApp, SCREENS } from '../state/store.jsx';
-import { ROUTINES, CATEGORIES, CATEGORY_META } from '../data/routines.js';
+import { ROUTINES } from '../data/routines.js';
+import { CATEGORIES, CATEGORY_META } from '../data/schema.js';
 
 function getTotalMinutes(routine) {
   const totalSeconds = routine.intervals.reduce((acc, i) => acc + i.duration, 0);

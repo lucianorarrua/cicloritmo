@@ -1,32 +1,6 @@
 import { useState } from 'preact/hooks';
 import { useApp, SCREENS } from '../state/store.jsx';
-import { POSITION_LABELS } from '../data/routines.js';
-
-const TYPE_BADGES = {
-  warmup: 'bg-clay-brand-lavender/40 text-clay-ink',
-  work: 'bg-clay-brand-pink/20 text-clay-brand-pink',
-  recovery: 'bg-green-100 text-green-700',
-  cooldown: 'bg-clay-brand-lavender/40 text-clay-ink',
-};
-
-const TYPE_LABELS = {
-  warmup: 'Calentamiento',
-  work: 'Trabajo',
-  recovery: 'Recuperación',
-  cooldown: 'Enfriamiento',
-};
-
-const TYPE_ACCENT = {
-  warmup: 'border-l-clay-brand-lavender',
-  work: 'border-l-clay-brand-pink',
-  recovery: 'border-l-clay-success',
-  cooldown: 'border-l-clay-brand-lavender',
-};
-
-const POSITION_BADGES = {
-  sentado: 'bg-blue-50 text-blue-600',
-  parado: 'bg-amber-50 text-amber-700',
-};
+import { TYPE_BADGES, TYPE_LABELS, TYPE_ACCENT, POSITION_BADGES, POSITION_LABELS } from '../data/schema.js';
 
 function inputClass() {
   return 'w-full bg-clay-canvas border border-clay-hairline rounded-xl px-3.5 py-2.5 text-sm text-clay-ink placeholder:text-clay-muted-soft focus:outline-none focus:border-clay-ink transition-colors';

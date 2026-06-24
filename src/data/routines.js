@@ -1,8 +1,3 @@
-export const POSITION_LABELS = {
-  sentado: 'Sentado',
-  parado: 'De Pie',
-};
-
 export const ROUTINES = {
   principiante: {
     title: "Iniciación al Cardio",
@@ -168,17 +163,3 @@ export const ROUTINES = {
   }
 };
 
-export const CATEGORIES = [
-  { key: 'all', label: 'Todos' },
-  { key: 'suave', label: 'Suave / Iniciación' },
-  { key: 'hiit', label: 'HIIT / Tabata' },
-  { key: 'fuerza', label: 'Fuerza / Escalada' },
-  { key: 'fondo', label: 'Fondo / Cardio' },
-];
-
-export const CATEGORY_META = {
-  suave: { badge: "Suave", color: "bg-clay-brand-lavender", textColor: "text-clay-ink", badgeClass: "bg-clay-canvas/30 text-clay-ink border-clay-ink/20", maxStrength: "5/10" },
-  hiit: { badge: "Muy Intenso", color: "bg-clay-brand-pink", textColor: "text-white", badgeClass: "bg-white/20 text-white border-white/20", maxStrength: "8/10" },
-  fuerza: { badge: "Fuerza / Escalada", color: "bg-clay-brand-teal", textColor: "text-white", badgeClass: "bg-white/20 text-white border-white/20", maxStrength: "9/10" },
-  fondo: { badge: "Fondo / Aeróbico", color: "bg-clay-brand-peach", textColor: "text-clay-ink", badgeClass: "bg-clay-canvas/40 text-clay-ink border-clay-ink/20", maxStrength: "5/10" },
-};

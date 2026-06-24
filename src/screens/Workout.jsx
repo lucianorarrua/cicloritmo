@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { useApp } from '../state/store.jsx';
-import { POSITION_LABELS } from '../data/routines.js';
+import { PHASE_DISPLAY, POSITION_DISPLAY, POSITION_LABELS, getEffortLevel, getPhaseInfo } from '../data/schema.js';
 import { MetronomeWheel } from '../components/MetronomeWheel.jsx';
 import { playCountdownSound, playAlertSound } from '../audio/engine.js';
 import { calculateDistance, calculateCalories } from '../utils/metrics.js';
@@ -10,31 +10,6 @@ import {
   stopKeepScreenOnLock,
   setupVisibilityChange,
 } from '../utils/keepAwake.js';
-
-const PHASE_INFO = {
-  warmup: { color: '#a4d4c5', bg: 'bg-clay-brand-mint/30', text: 'Calentamiento', textClass: 'text-clay-brand-teal', badge: 'bg-clay-brand-teal text-white' },
-  work: { color: '#EF4444', bg: 'bg-red-50', text: 'Trabajo', textClass: 'text-clay-error', badge: 'bg-clay-error text-white' },
-  recovery: { color: '#22c55e', bg: 'bg-green-50', text: 'Recuperación', textClass: 'text-clay-success', badge: 'bg-clay-success text-white' },
-  cooldown: { color: '#b8a4ed', bg: 'bg-clay-brand-lavender/20', text: 'Enfriamiento', textClass: 'text-clay-brand-lavender', badge: 'bg-clay-brand-lavender text-clay-ink' },
-};
-
-const POSITION_INFO = {
-  sentado: { text: 'Sentado', badge: 'bg-blue-50 text-blue-600 border border-blue-200' },
-  parado: { text: 'De Pie', badge: 'bg-amber-50 text-amber-700 border border-amber-200' },
-};
-
-function getPhaseInfo(type) {
-  return PHASE_INFO[type] || { color: '#0a0a0a', bg: 'bg-clay-surface-soft', text: type, textClass: 'text-clay-ink', badge: 'bg-clay-ink text-white' };
-}
-
-function getEffortLevel(rpm, res) {
-  const score = (rpm || 0) * 0.3 + (res || 0) * 1.5;
-  if (score < 5) return { label: 'Suave', color: 'text-clay-brand-mint' };
-  if (score < 10) return { label: 'Moderado', color: 'text-clay-brand-ochre' };
-  if (score < 15) return { label: 'Alto', color: 'text-clay-brand-peach' };
-  if (score < 20) return { label: 'Intenso', color: 'text-clay-brand-coral' };
-  return { label: 'Máximo', color: 'text-clay-error' };
-}
 
 export function Workout() {
   const { state, actions } = useApp();
@@ -212,8 +187,8 @@ export function Workout() {
         </div>
         {/* Position badge */}
         {interval.position && (
-          <div class={`px-3 py-1 rounded-full text-[11px] font-semibold -mt-2 ${POSITION_INFO[interval.position]?.badge || ''}`}>
-            {POSITION_INFO[interval.position]?.text || POSITION_LABELS[interval.position] || interval.position}
+            <div class={`px-3 py-1 rounded-full text-[11px] font-semibold -mt-2 ${POSITION_DISPLAY[interval.position]?.badge || ''}`}>
+              {POSITION_DISPLAY[interval.position]?.text || POSITION_LABELS[interval.position] || interval.position}
           </div>
         )}
 
