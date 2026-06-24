@@ -1,7 +1,6 @@
 export const POSITION_LABELS = {
   sentado: 'Sentado',
   parado: 'De Pie',
-  mixto: 'Mixto',
 };
 
 export const ROUTINES = {
@@ -142,7 +141,7 @@ export const ROUTINES = {
     intervals: [
       { name: "Calentamiento Progresivo", duration: 300, res: 3, rpm: 80, type: "warmup", position: "sentado" },
       { name: "Fase 1: Cadencia Ágil", duration: 180, res: 4, rpm: 95, type: "work", position: "sentado" },
-      { name: "Fase 2: Carga de Fuerza", duration: 180, res: 6, rpm: 75, type: "work", position: "mixto" },
+      { name: "Fase 2: Carga de Fuerza", duration: 180, res: 6, rpm: 75, type: "work", position: "parado" },
       { name: "Descanso Activo", duration: 120, res: 3, rpm: 80, type: "recovery", position: "sentado" },
       { name: "Fase 3: Ritmo Crucero", duration: 300, res: 5, rpm: 85, type: "work", position: "sentado" },
       { name: "Fase 4: Sprint Controlado", duration: 120, res: 4, rpm: 100, type: "work", position: "parado" },
@@ -160,7 +159,7 @@ export const ROUTINES = {
       { name: "Bloque Sentado Zona 2", duration: 240, res: 4, rpm: 85, type: "work", position: "sentado" },
       { name: "Transición de Pie Suave", duration: 180, res: 5, rpm: 75, type: "work", position: "parado" },
       { name: "Recuperación Sentado", duration: 120, res: 3, rpm: 80, type: "recovery", position: "sentado" },
-      { name: "Bloque Mixto: Sentado+Pie", duration: 300, res: 5, rpm: 85, type: "work", position: "mixto" },
+      { name: "Bloque de Pie Zona 2-3", duration: 300, res: 5, rpm: 85, type: "work", position: "parado" },
       { name: "Descanso Activo", duration: 120, res: 3, rpm: 80, type: "recovery", position: "sentado" },
       { name: "Escalada de Pie", duration: 180, res: 7, rpm: 65, type: "work", position: "parado" },
       { name: "Ritmo Crucero Sentado", duration: 300, res: 4, rpm: 85, type: "work", position: "sentado" },

@@ -26,7 +26,6 @@ const TYPE_ACCENT = {
 const POSITION_BADGES = {
   sentado: 'bg-blue-50 text-blue-600',
   parado: 'bg-amber-50 text-amber-700',
-  mixto: 'bg-purple-50 text-purple-600',
 };
 
 function inputClass() {
@@ -188,7 +187,6 @@ export function Creator() {
             >
               <option value="sentado">Sentado</option>
               <option value="parado">De Pie</option>
-              <option value="mixto">Mixto</option>
             </select>
           </div>
           <div>

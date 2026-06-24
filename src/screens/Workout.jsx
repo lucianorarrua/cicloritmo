@@ -21,7 +21,6 @@ const PHASE_INFO = {
 const POSITION_INFO = {
   sentado: { text: 'Sentado', badge: 'bg-blue-50 text-blue-600 border border-blue-200' },
   parado: { text: 'De Pie', badge: 'bg-amber-50 text-amber-700 border border-amber-200' },
-  mixto: { text: 'Mixto', badge: 'bg-purple-50 text-purple-600 border border-purple-200' },
 };
 
 function getPhaseInfo(type) {
