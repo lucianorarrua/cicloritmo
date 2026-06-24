@@ -34,20 +34,27 @@ const FOCUS_GUIDELINES = {
 };
 
 const EXAMPLE_ROUTINE = {
-  title: 'HIIT Express 25 min',
+  title: 'HIIT Express 25 min (1500s exactos)',
   category: 'hiit',
-  description: 'Entrenamiento HIIT corto e intenso, ideal para quemar calorías en poco tiempo.',
+  description: 'Entrenamiento HIIT corto e intenso. La suma de todas las duraciones es exactamente 1500 segundos = 25 minutos.',
   intervals: [
-    { name: 'Calentamiento Progresivo', duration: 240, res: 3, rpm: 85, type: 'warmup', position: 'sentado' },
-    { name: 'Sprint 1', duration: 20, res: 7, rpm: 110, type: 'work', position: 'parado' },
-    { name: 'Recupera 1', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
-    { name: 'Sprint 2', duration: 20, res: 7, rpm: 110, type: 'work', position: 'parado' },
-    { name: 'Recupera 2', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
-    { name: 'Sprint 3', duration: 20, res: 8, rpm: 110, type: 'work', position: 'parado' },
-    { name: 'Recupera 3', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
-    { name: 'Sprint 4', duration: 20, res: 8, rpm: 110, type: 'work', position: 'parado' },
-    { name: 'Recuperación Activa', duration: 240, res: 4, rpm: 80, type: 'recovery', position: 'sentado' },
-    { name: 'Enfriamiento Final', duration: 180, res: 2, rpm: 75, type: 'cooldown', position: 'sentado' },
+    { name: 'Calentamiento Progresivo', duration: 300, res: 3, rpm: 85, type: 'warmup', position: 'sentado' },
+    { name: 'Sprint 1/5', duration: 20, res: 7, rpm: 110, type: 'work', position: 'parado' },
+    { name: 'Recupera 1/5', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint 2/5', duration: 20, res: 7, rpm: 110, type: 'work', position: 'parado' },
+    { name: 'Recupera 2/5', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint 3/5', duration: 20, res: 8, rpm: 110, type: 'work', position: 'parado' },
+    { name: 'Recupera 3/5', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint 4/5', duration: 20, res: 8, rpm: 110, type: 'work', position: 'parado' },
+    { name: 'Recupera 4/5', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint 5/5', duration: 20, res: 8, rpm: 110, type: 'work', position: 'parado' },
+    { name: 'Recupera 5/5', duration: 10, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Recuperación Activa', duration: 720, res: 4, rpm: 80, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint Final 1/2', duration: 30, res: 8, rpm: 105, type: 'work', position: 'parado' },
+    { name: 'Recupera Final 1/2', duration: 15, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Sprint Final 2/2', duration: 30, res: 9, rpm: 105, type: 'work', position: 'parado' },
+    { name: 'Recupera Final 2/2', duration: 15, res: 3, rpm: 70, type: 'recovery', position: 'sentado' },
+    { name: 'Enfriamiento Final', duration: 240, res: 2, rpm: 75, type: 'cooldown', position: 'sentado' },
   ],
 };
 
@@ -119,7 +126,13 @@ La duración solicitada está en minutos. Debes convertirla a segundos y distrib
 
 ## EJEMPLO DE RESPUESTA CORRECTA
 
+// SUMA = 300+20+10+20+10+20+10+20+10+20+10+720+30+15+30+15+240 = 1500 segundos = 25 minutos exactos
+// Fíjate cómo cada "duration" contribuye a la suma total. El título incluye la duración real.
 ${JSON.stringify(EXAMPLE_ROUTINE, null, 2)}
+
+## ANTES DE RESPONDER
+
+Haz este cálculo mental: suma todos los valores "duration" uno por uno. El resultado DEBE ser exactamente la duración solicitada en segundos. Si no coincide, ajusta las duraciones y recalcula. NO entregues una rutina cuya suma no coincida.
 
 ## FORMATO DE RESPUESTA
 

@@ -84,28 +84,49 @@ function parseLLMResponse(text) {
   return JSON.parse(trimmed);
 }
 
-function jsonResponse(data, status = 200) {
+function isAllowedOrigin(origin, host) {
+  return origin && (
+    origin.endsWith(host) ||
+    origin.startsWith('http://localhost:')
+  );
+}
+
+function corsHeaders(request) {
+  const origin = request.headers.get('Origin');
+  const host = new URL(request.url).hostname;
+  if (!isAllowedOrigin(origin, host)) return {};
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   });
 }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  const cResp = corsHeaders(request);
+
   // Parse body
   let body;
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: 'El body debe ser JSON válido.' }, 400);
+    return jsonResponse({ error: 'El body debe ser JSON válido.' }, 400, cResp);
   }
 
   // Validate preferences
   const prefError = validatePreferences(body.preferences);
   if (prefError) {
-    return jsonResponse({ error: prefError }, 400);
+    return jsonResponse({ error: prefError }, 400, cResp);
   }
 
   // Build prompts
@@ -117,11 +138,11 @@ export async function onRequestPost(context) {
   try {
     const provider = env.AI_PROVIDER || 'openai';
     if (provider !== 'openai') {
-      return jsonResponse({ error: `Proveedor IA no soportado: ${provider}. Solo "openai" está disponible.` }, 500);
+      return jsonResponse({ error: `Proveedor IA no soportado: ${provider}. Solo "openai" está disponible.` }, 500, cResp);
     }
     rawText = await openaiGenerate({ systemPrompt, userPrompt, env });
   } catch (err) {
-    return jsonResponse({ error: `Error al generar la rutina: ${err.message}` }, 502);
+    return jsonResponse({ error: `Error al generar la rutina: ${err.message}` }, 502, cResp);
   }
 
   // Parse LLM response
@@ -129,39 +150,22 @@ export async function onRequestPost(context) {
   try {
     routine = parseLLMResponse(rawText);
   } catch (err) {
-    return jsonResponse({ error: `El modelo no devolvió JSON válido. Intenta de nuevo. Detalle: ${err.message}` }, 502);
+    return jsonResponse({ error: `El modelo no devolvió JSON válido. Intenta de nuevo. Detalle: ${err.message}` }, 502, cResp);
   }
 
   // Validate routine
   const routineError = validateRoutine(routine, body.preferences.duration_minutes);
   if (routineError) {
-    return jsonResponse({ error: `La rutina generada no cumple el esquema: ${routineError}` }, 502);
+    return jsonResponse({ error: `La rutina generada no cumple el esquema: ${routineError}` }, 502, cResp);
   }
 
-  return jsonResponse({ routine });
+  return jsonResponse({ routine }, 200, cResp);
 }
 
 export async function onRequestOptions({ request }) {
-  const origin = request.headers.get('Origin');
-  const host = new URL(request.url).hostname;
-
-  // Solo permite: mismo origen o localhost (dev)
-  const allowed = origin && (
-    origin.endsWith(host) ||
-    origin.startsWith('http://localhost:')
-  );
-
-  if (!allowed) {
+  const headers = corsHeaders(request);
+  if (Object.keys(headers).length === 0) {
     return new Response(null, { status: 204 });
   }
-
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '86400',
-    },
-  });
+  return new Response(null, { status: 204, headers });
 }
