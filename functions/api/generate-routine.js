@@ -96,7 +96,7 @@ function parseLLMResponse(text) {
   return JSON.parse(trimmed);
 }
 
-export function normalizeDurations(intervals, targetSeconds) {
+function normalizeDurations(intervals, targetSeconds) {
   if (!Array.isArray(intervals) || intervals.length === 0) return intervals;
   const currentTotal = intervals.reduce((s, iv) => s + (Number(iv?.duration) || 0), 0);
   if (currentTotal <= 0) return intervals;
@@ -226,7 +226,7 @@ async function tryGenerate(preferences, env, maxRetries) {
     }
 
     if (attempt === maxRetries) {
-      return { error: 'No se pudo generar una rutina con la duración correcta. Intenta con otras preferencias.' };
+      return { error: 'No se pudo generar una rutina válida. Intenta con otras preferencias.' };
     }
 
     messages.push(

@@ -91,7 +91,7 @@ Cada rutina debe seguir esta estructura:
 
 1. EL PRIMER intervalo SIEMPRE debe ser de tipo "warmup".
 2. EL ÚLTIMO intervalo SIEMPRE debe ser de tipo "cooldown".
-3. **REGLA CRÍTICA DE DURACIÓN:** La suma de TODOS los intervalos en segundos DEBE ser EXACTAMENTE la duración total solicitada en segundos. Usa la calculadora mental: suma cada duration a medida que generas los intervalos. El total debe coincidir con el número indicado en el prompt del usuario. Tolerancia máxima: ±3%. Si te pasas, acorta los bloques de trabajo. Si te falta, alarga los bloques de recuperación o añade un bloque extra.
+3. **DURACIÓN:** La suma de los "duration" debe ser APROXIMADAMENTE la duración total solicitada. NO es necesario que sea exacta: el sistema ajusta automáticamente las duraciones después para que la suma sea perfecta. Mantente cerca del target (±15%) para preservar la estructura. Importante: genera SUFICIENTES intervalos para llenar el tiempo pedido (~1 bloque por cada 30-60s en HIIT, ~1 por cada 60-120s en fuerza, ~1 por cada 180-300s en fondo). Si piden 20 min, no entregues 6 sprints cortos que solo suman 8 min: añade más bloques o hazlos más largos.
 4. El warmup debe ocupar entre el 10% y 20% del tiempo total.
 5. El cooldown debe ocupar entre el 5% y 15% del tiempo total.
 6. Los bloques de trabajo (work) deben alternarse con bloques de recuperación (recovery).
@@ -102,7 +102,7 @@ Cada rutina debe seguir esta estructura:
 11. Usa nombres de intervalo en español, descriptivos y variados.
 12. Genera entre 4 y 20 intervalos en total.
 13. La resistencia (res) debe ser coherente con el tipo de intervalo y la categoría.
-14. ANTES de devolver el JSON, verifica que la suma de todos los "duration" coincida con la duración solicitada. Si no, ajusta y recalcula.
+14. Genera suficientes intervalos para que la suma de "duration" se acerque a la duración solicitada. No gastes tiempo en aritmética exacta: el sistema normaliza las duraciones después para que la suma sea perfecta. Enfócate en la calidad y coherencia de los bloques.
 
 ## CATEGORÍAS DE INTENSIDAD
 
@@ -132,25 +132,49 @@ ${JSON.stringify(EXAMPLE_ROUTINE, null, 2)}
 
 ## ANTES DE RESPONDER
 
-Haz este cálculo mental: suma todos los valores "duration" uno por uno. El resultado DEBE ser exactamente la duración solicitada en segundos. Si no coincide, ajusta las duraciones y recalcula. NO entregues una rutina cuya suma no coincida.
+Genera una rutina con suficientes intervalos para llenar la duración solicitada (la suma de "duration" debe acercarse al target en segundos). El sistema ajustará las duraciones automáticamente para que la suma sea exacta, así que enfócate en la calidad de los bloques, no en la aritmética.
 
 ## FORMATO DE RESPUESTA
 
 Responde ÚNICAMENTE con el objeto JSON de la rutina. No incluyas markdown, explicaciones, comentarios ni texto adicional. Solo el JSON puro.`;
 }
 
+function corePlan(category, coreSeconds) {
+  let workS, recoveryS, maxPairs;
+  if (category === 'hiit') { workS = 25; recoveryS = 15; maxPairs = 16; }
+  else if (category === 'fuerza') { workS = 150; recoveryS = 75; maxPairs = 8; }
+  else if (category === 'fondo') { workS = 480; recoveryS = 60; maxPairs = 6; }
+  else { workS = 90; recoveryS = 60; maxPairs = 10; }
+  const pair = workS + recoveryS;
+  let pairs = Math.max(category === 'fondo' ? 2 : 3, Math.round(coreSeconds / pair));
+  if (pairs > maxPairs) {
+    pairs = maxPairs;
+    workS = Math.max(15, Math.round(coreSeconds / pairs) - recoveryS);
+  }
+  return { pairs, workS, recoveryS };
+}
+
 export function buildUserPrompt(preferences) {
   const cat = CATEGORIES[preferences.category] || {};
   const positions = preferences.position_preference || [];
   const totalSeconds = preferences.duration_minutes * 60;
+  const warmupHint = Math.round(totalSeconds * 0.12);
+  const cooldownHint = Math.round(totalSeconds * 0.10);
+  const coreHint = totalSeconds - warmupHint - cooldownHint;
+  const plan = corePlan(preferences.category, coreHint);
   return `Genera una rutina de indoor cycling con las siguientes preferencias:
 
-- Duración total: ${preferences.duration_minutes} minutos = **EXACTAMENTE ${totalSeconds} segundos**
+- Duración total: ${preferences.duration_minutes} minutos (~${totalSeconds} segundos)
 - Categoría: ${cat.label || preferences.category}
 - Enfoque: ${preferences.focus}
 - Posiciones permitidas: ${positions.join(', ')}${preferences.extra_instructions ? `\n- Instrucciones adicionales: ${preferences.extra_instructions}` : ''}
 
-La suma de duration de TODOS los intervalos debe ser EXACTAMENTE ${totalSeconds} segundos. Verifica la suma antes de responder.
+Estructura sugerida (síguela de cerca para que la suma se acerque a ${totalSeconds}s; el sistema ajustará las duraciones después):
+- 1 bloque warmup de ~${warmupHint}s
+- ${plan.pairs} pares de bloques work/recovery (~${plan.workS}s de trabajo + ~${plan.recoveryS}s de recuperación cada par). Genera EXACTAMENTE ${plan.pairs} bloques work alternados con ${plan.pairs} bloques recovery.
+- 1 bloque cooldown de ~${cooldownHint}s
+
+Eso da ~${warmupHint + plan.pairs * (plan.workS + plan.recoveryS) + cooldownHint}s en total. Varía ligeramente las duraciones y los res/rpm según el enfoque, pero mantén el número de bloques work en ${plan.pairs}.
 
 Responde solo con el JSON.`;
 }
