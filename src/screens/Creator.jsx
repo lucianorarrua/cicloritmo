@@ -116,7 +116,7 @@ export function Creator() {
   }
 
   return (
-    <div class="flex flex-col gap-5 w-full max-w-lg mx-auto">
+    <div class="flex flex-col gap-5 w-full max-w-lg mx-auto flex-1 min-h-0">
       {/* Cancel */}
       <button
         onClick={() => actions.setScreen(SCREENS.SELECTOR)}
@@ -167,7 +167,7 @@ export function Creator() {
       {activeTab === 'manual' && (
         <>
           {/* Interval list */}
-          <div>
+          <div class="flex-1 min-h-0 flex flex-col">
             <div class="flex items-stretch justify-between mb-2.5 min-h-[28px]">
               <h3 class="text-xs font-semibold text-clay-muted uppercase tracking-[0.1em] flex items-center">Intervalos ({intervals.length})</h3>
               <div class="flex items-center gap-2">
@@ -188,7 +188,7 @@ export function Creator() {
                 </button>
               </div>
             </div>
-            <div class="max-h-56 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+            <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 no-scrollbar">
               {intervals.length === 0 && (
                 <div class="text-center py-10 bg-clay-surface-soft rounded-2xl border border-clay-hairline border-dashed">
                   <p class="text-sm text-clay-muted">No hay intervalos a&uacute;n.</p>
