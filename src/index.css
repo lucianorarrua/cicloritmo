@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-clay-canvas: #fffaf0;
+  --color-clay-ink: #0a0a0a;
+  --color-clay-body: #3a3a3a;
+  --color-clay-body-strong: #1a1a1a;
+  --color-clay-muted: #6a6a6a;
+  --color-clay-muted-soft: #9a9a9a;
+  --color-clay-hairline: #e5e5e5;
+  --color-clay-hairline-soft: #f0f0f0;
+  --color-clay-surface-soft: #faf5e8;
+  --color-clay-surface-card: #f5f0e0;
+  --color-clay-surface-strong: #ebe6d6;
+  --color-clay-surface-dark: #0a1a1a;
+  --color-clay-surface-dark-elevated: #1a2a2a;
+  --color-clay-on-primary: #ffffff;
+  --color-clay-on-dark: #ffffff;
+  --color-clay-on-dark-soft: #a0a0a0;
+  --color-clay-brand-pink: #ff4d8b;
+  --color-clay-brand-teal: #1a3a3a;
+  --color-clay-brand-lavender: #b8a4ed;
+  --color-clay-brand-peach: #ffb084;
+  --color-clay-brand-ochre: #e8b94a;
+  --color-clay-brand-mint: #a4d4c5;
+  --color-clay-brand-coral: #ff6b5a;
+  --color-clay-success: #22c55e;
+  --color-clay-warning: #f59e0b;
+  --color-clay-error: #ef4444;
+
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-clay-canvas);
+  overscroll-behavior-y: contain;
+  color: var(--color-clay-ink);
+}
+
+.display-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
