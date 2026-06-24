@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────
 //  CicloRitmo — POST /api/generate-routine
 //  Cloudflare Pages Function
-//  Generates a cycling routine via LLM.
+//  Generates a cycling routine via LLM
+//  with automatic retry on validation failure.
 // ──────────────────────────────────────────────
 
 import { buildSystemPrompt, buildUserPrompt } from '../_lib/prompt-builder.js';
@@ -11,6 +12,8 @@ const VALID_CATEGORIES = ['suave', 'hiit', 'fuerza', 'fondo'];
 const VALID_FOCUS = ['resistencia', 'cadencia', 'mixto'];
 const VALID_POSITIONS = ['sentado', 'parado'];
 const INTERVAL_TYPES = ['warmup', 'work', 'recovery', 'cooldown'];
+const MAX_RETRIES = 2;
+const DURATION_TOLERANCE = 0.20;
 
 function validatePreferences(p) {
   if (!p || typeof p !== 'object') {
@@ -37,30 +40,30 @@ function validatePreferences(p) {
 }
 
 function validateRoutine(routine, requestedMinutes) {
-  if (!routine || typeof routine !== 'object') return 'La respuesta no contiene un objeto JSON válido.';
-  if (!routine.title || typeof routine.title !== 'string') return 'Falta el campo "title".';
-  if (!VALID_CATEGORIES.includes(routine.category)) return `Categoría inválida: "${routine.category}".`;
-  if (!routine.description || typeof routine.description !== 'string') return 'Falta el campo "description".';
-  if (!Array.isArray(routine.intervals) || routine.intervals.length === 0) return 'Falta el array "intervals" o está vacío.';
+  if (!routine || typeof routine !== 'object') return 'La respuesta no es un objeto JSON válido.';
+  if (!routine.title || typeof routine.title !== 'string') return 'falta el campo "title".';
+  if (!VALID_CATEGORIES.includes(routine.category)) return `categoría inválida: "${routine.category}".`;
+  if (!routine.description || typeof routine.description !== 'string') return 'falta el campo "description".';
+  if (!Array.isArray(routine.intervals) || routine.intervals.length === 0) return 'no tiene intervalos.';
 
   let totalDuration = 0;
   for (let i = 0; i < routine.intervals.length; i++) {
     const iv = routine.intervals[i];
-    if (!iv.name || typeof iv.name !== 'string') return `Intervalo ${i + 1}: falta "name".`;
-    if (typeof iv.duration !== 'number' || iv.duration < 5) return `Intervalo ${i + 1}: "duration" inválido (mín 5s).`;
-    if (typeof iv.res !== 'number' || iv.res < 1 || iv.res > 10) return `Intervalo ${i + 1}: "res" fuera de rango (1-10).`;
-    if (typeof iv.rpm !== 'number' || iv.rpm < 30 || iv.rpm > 150) return `Intervalo ${i + 1}: "rpm" fuera de rango (30-150).`;
-    if (!INTERVAL_TYPES.includes(iv.type)) return `Intervalo ${i + 1}: "type" inválido: "${iv.type}".`;
-    if (!VALID_POSITIONS.includes(iv.position)) return `Intervalo ${i + 1}: "position" inválido: "${iv.position}".`;
+    if (!iv.name || typeof iv.name !== 'string') return `el intervalo ${i + 1} no tiene "name".`;
+    if (typeof iv.duration !== 'number' || iv.duration < 5) return `el intervalo ${i + 1} tiene "duration" inválido.`;
+    if (typeof iv.res !== 'number' || iv.res < 1 || iv.res > 10) return `el intervalo ${i + 1} tiene "res" fuera de rango.`;
+    if (typeof iv.rpm !== 'number' || iv.rpm < 30 || iv.rpm > 150) return `el intervalo ${i + 1} tiene "rpm" fuera de rango.`;
+    if (!INTERVAL_TYPES.includes(iv.type)) return `el intervalo ${i + 1} tiene "type" inválido.`;
+    if (!VALID_POSITIONS.includes(iv.position)) return `el intervalo ${i + 1} tiene "position" inválido.`;
     totalDuration += iv.duration;
   }
 
   if (requestedMinutes) {
     const targetSeconds = requestedMinutes * 60;
     const deviation = Math.abs(totalDuration - targetSeconds) / targetSeconds;
-    if (deviation > 0.20) {
+    if (deviation > DURATION_TOLERANCE) {
       const actualMinutes = Math.round(totalDuration / 60);
-      return `La duración total de la rutina (${totalDuration}s ≈ ${actualMinutes} min) no coincide con la solicitada (${targetSeconds}s = ${requestedMinutes} min). Desviación: ${Math.round(deviation * 100)}%.`;
+      return `la duración total es ${totalDuration}s ≈ ${actualMinutes} min, pero se pidieron ${targetSeconds}s = ${requestedMinutes} min. Corrige las duraciones para que la suma sea exactamente ${targetSeconds}s.`;
     }
   }
 
@@ -110,12 +113,61 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
   });
 }
 
+async function tryGenerate(preferences, env, maxRetries) {
+  const systemPrompt = buildSystemPrompt();
+  const userPrompt = buildUserPrompt(preferences);
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let rawText;
+    try {
+      rawText = await openaiGenerate({ messages, env });
+    } catch (err) {
+      if (attempt === maxRetries) {
+        return { error: 'Error de conexión con el servicio de IA.' };
+      }
+      continue;
+    }
+
+    let routine;
+    try {
+      routine = parseLLMResponse(rawText);
+    } catch {
+      if (attempt === maxRetries) {
+        return { error: 'No se pudo generar una rutina válida.' };
+      }
+      messages.push(
+        { role: 'assistant', content: rawText.slice(0, 2000) },
+        { role: 'user', content: 'Tu respuesta no es un JSON válido. Responde ÚNICAMENTE con el objeto JSON de la rutina, sin markdown, sin explicaciones. Solo el JSON puro.' },
+      );
+      continue;
+    }
+
+    const validationError = validateRoutine(routine, preferences.duration_minutes);
+    if (!validationError) {
+      return { routine };
+    }
+
+    if (attempt === maxRetries) {
+      return { error: 'No se pudo generar una rutina con la duración correcta. Intenta con otras preferencias.' };
+    }
+
+    messages.push(
+      { role: 'assistant', content: JSON.stringify(routine).slice(0, 3000) },
+      { role: 'user', content: `Tu rutina fue rechazada: ${validationError} Corrige ese error y genera una nueva rutina. Responde solo con el JSON.` },
+    );
+  }
+
+  return { error: 'No se pudo generar la rutina.' };
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
-
   const cResp = corsHeaders(request);
 
-  // Parse body
   let body;
   try {
     body = await request.json();
@@ -123,43 +175,16 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: 'El body debe ser JSON válido.' }, 400, cResp);
   }
 
-  // Validate preferences
   const prefError = validatePreferences(body.preferences);
   if (prefError) {
     return jsonResponse({ error: prefError }, 400, cResp);
   }
 
-  // Build prompts
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(body.preferences);
-
-  // Call LLM
-  let rawText;
-  try {
-    const provider = env.AI_PROVIDER || 'openai';
-    if (provider !== 'openai') {
-      return jsonResponse({ error: `Proveedor IA no soportado: ${provider}. Solo "openai" está disponible.` }, 500, cResp);
-    }
-    rawText = await openaiGenerate({ systemPrompt, userPrompt, env });
-  } catch (err) {
-    return jsonResponse({ error: `Error al generar la rutina: ${err.message}` }, 502, cResp);
+  const result = await tryGenerate(body.preferences, env, MAX_RETRIES);
+  if (result.routine) {
+    return jsonResponse({ routine: result.routine }, 200, cResp);
   }
-
-  // Parse LLM response
-  let routine;
-  try {
-    routine = parseLLMResponse(rawText);
-  } catch (err) {
-    return jsonResponse({ error: `El modelo no devolvió JSON válido. Intenta de nuevo. Detalle: ${err.message}` }, 502, cResp);
-  }
-
-  // Validate routine
-  const routineError = validateRoutine(routine, body.preferences.duration_minutes);
-  if (routineError) {
-    return jsonResponse({ error: `La rutina generada no cumple el esquema: ${routineError}` }, 502, cResp);
-  }
-
-  return jsonResponse({ routine }, 200, cResp);
+  return jsonResponse({ error: result.error || 'No se pudo generar la rutina.' }, 502, cResp);
 }
 
 export async function onRequestOptions({ request }) {

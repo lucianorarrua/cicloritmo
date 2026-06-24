@@ -9,7 +9,7 @@
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
-export async function openaiGenerate({ systemPrompt, userPrompt, env }) {
+export async function openaiGenerate({ messages, env }) {
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY no está configurada en las variables de entorno.');
@@ -25,10 +25,7 @@ export async function openaiGenerate({ systemPrompt, userPrompt, env }) {
     },
     body: JSON.stringify({
       model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
+      messages,
       temperature: 0.7,
       max_tokens: 4096,
     }),
