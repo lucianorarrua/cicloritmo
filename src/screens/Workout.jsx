@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { useApp } from '../state/store.jsx';
+import { POSITION_LABELS } from '../data/routines.js';
 import { MetronomeWheel } from '../components/MetronomeWheel.jsx';
 import { playCountdownSound, playAlertSound } from '../audio/engine.js';
 import { calculateDistance, calculateCalories } from '../utils/metrics.js';
@@ -15,6 +16,12 @@ const PHASE_INFO = {
   work: { color: '#EF4444', bg: 'bg-red-50', text: 'Trabajo', textClass: 'text-clay-error', badge: 'bg-clay-error text-white' },
   recovery: { color: '#22c55e', bg: 'bg-green-50', text: 'Recuperación', textClass: 'text-clay-success', badge: 'bg-clay-success text-white' },
   cooldown: { color: '#b8a4ed', bg: 'bg-clay-brand-lavender/20', text: 'Enfriamiento', textClass: 'text-clay-brand-lavender', badge: 'bg-clay-brand-lavender text-clay-ink' },
+};
+
+const POSITION_INFO = {
+  sentado: { text: 'Sentado', badge: 'bg-blue-50 text-blue-600 border border-blue-200' },
+  parado: { text: 'De Pie', badge: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  mixto: { text: 'Mixto', badge: 'bg-purple-50 text-purple-600 border border-purple-200' },
 };
 
 function getPhaseInfo(type) {
@@ -204,6 +211,12 @@ export function Workout() {
         <div class={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase ${phaseInfo.badge}`}>
           {phaseInfo.text}
         </div>
+        {/* Position badge */}
+        {interval.position && (
+          <div class={`px-3 py-1 rounded-full text-[11px] font-semibold -mt-2 ${POSITION_INFO[interval.position]?.badge || ''}`}>
+            {POSITION_INFO[interval.position]?.text || POSITION_LABELS[interval.position] || interval.position}
+          </div>
+        )}
 
         {/* Interval name */}
         <h2 class="text-lg sm:text-xl font-bold text-clay-ink text-center leading-tight px-2">

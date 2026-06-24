@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { useApp, SCREENS } from '../state/store.jsx';
+import { POSITION_LABELS } from '../data/routines.js';
 
 const TYPE_BADGES = {
   warmup: 'bg-clay-brand-lavender/40 text-clay-ink',
@@ -22,6 +23,12 @@ const TYPE_ACCENT = {
   cooldown: 'border-l-clay-brand-lavender',
 };
 
+const POSITION_BADGES = {
+  sentado: 'bg-blue-50 text-blue-600',
+  parado: 'bg-amber-50 text-amber-700',
+  mixto: 'bg-purple-50 text-purple-600',
+};
+
 function inputClass() {
   return 'w-full bg-clay-canvas border border-clay-hairline rounded-xl px-3.5 py-2.5 text-sm text-clay-ink placeholder:text-clay-muted-soft focus:outline-none focus:border-clay-ink transition-colors';
 }
@@ -40,9 +47,10 @@ export function Creator() {
   const [res, setRes] = useState(5);
   const [rpm, setRpm] = useState(85);
   const [type, setType] = useState('work');
+  const [position, setPosition] = useState('sentado');
 
   function handleAdd() {
-    actions.addCustomInterval({ name, duration, res, rpm, type });
+    actions.addCustomInterval({ name, duration, res, rpm, type, position });
   }
 
   function handleSave() {
@@ -98,6 +106,11 @@ export function Creator() {
                   <span class={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${TYPE_BADGES[interval.type] || ''}`}>
                     {TYPE_LABELS[interval.type] || interval.type}
                   </span>
+                  {interval.position && (
+                    <span class={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${POSITION_BADGES[interval.position] || ''}`}>
+                      {POSITION_LABELS[interval.position] || interval.position}
+                    </span>
+                  )}
                 </div>
                 <div class="flex gap-3 mt-1 text-[11px] text-clay-muted font-medium">
                   <span class="font-mono tabular-nums">{interval.duration}s</span>
@@ -165,6 +178,18 @@ export function Creator() {
               max={150}
               onInput={(e) => setRpm(Number(e.target.value))}
             />
+          </div>
+          <div>
+            <label class={labelClass()}>Posici&oacute;n</label>
+            <select
+              class={inputClass() + ' pr-8'}
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+            >
+              <option value="sentado">Sentado</option>
+              <option value="parado">De Pie</option>
+              <option value="mixto">Mixto</option>
+            </select>
           </div>
           <div>
             <label class={labelClass()}>Tipo</label>
