@@ -15,7 +15,8 @@ AI_MODEL = "gpt-4o-mini"
 #   npx wrangler pages secret put OPENAI_API_KEY
 # O desde Cloudflare Dashboard → Workers & Pages → cicloritmo → Settings → Secrets
 
-# KV namespace para rate limiting del endpoint IA.
+# KV namespace para rate limiting del endpoint IA (capa débil, KV es eventualmente
+# consistente). La protección principal contra bots es Cloudflare Turnstile.
 # Crear con: npx wrangler kv namespace create RATE_LIMIT
 [[kv_namespaces]]
 binding = "RATE_LIMIT"

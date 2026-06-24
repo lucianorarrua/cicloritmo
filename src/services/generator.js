@@ -7,7 +7,7 @@
 import { validateRoutine } from '../data/contract.js';
 
 const AI_ENDPOINT = import.meta.env.VITE_ROUTINE_GENERATOR_URL || '';
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 90000;
 
 export function isAiEnabled() {
   return !!AI_ENDPOINT;

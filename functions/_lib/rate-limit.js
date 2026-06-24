@@ -1,13 +1,12 @@
 // ──────────────────────────────────────────────
-//  CicloRitmo — Rate Limiter (KV-based)
-//  Per-IP limiting for the AI endpoint to
-//  prevent API key cost abuse.
+//  CicloRitmo — Rate Limiter (KV-based, best-effort)
+//  Per-IP limiting for the AI endpoint.
+//  KV is eventually consistent, so this is a weak
+//  layer. Primary bot protection is Turnstile.
 // ──────────────────────────────────────────────
 
-const MINUTE_WINDOW_S = 60;
-const HOUR_WINDOW_S = 3600;
-const MAX_PER_MINUTE = 5;
-const MAX_PER_HOUR = 20;
+const WINDOW_S = 60;
+const MAX_PER_WINDOW = 3;
 
 export function getClientIp(request) {
   return (
@@ -24,37 +23,20 @@ export async function checkRateLimit(env, ip) {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  const minuteBucket = Math.floor(now / MINUTE_WINDOW_S);
-  const hourBucket = Math.floor(now / HOUR_WINDOW_S);
+  const bucket = Math.floor(now / WINDOW_S);
+  const key = `rl:${ip}:${bucket}`;
 
-  const minuteKey = `rl:m:${ip}:${minuteBucket}`;
-  const hourKey = `rl:h:${ip}:${hourBucket}`;
+  const raw = await env.RATE_LIMIT.get(key);
+  const count = raw ? parseInt(raw, 10) : 0;
 
-  const [minuteRaw, hourRaw] = await Promise.all([
-    env.RATE_LIMIT.get(minuteKey),
-    env.RATE_LIMIT.get(hourKey),
-  ]);
-
-  const minuteCount = minuteRaw ? parseInt(minuteRaw, 10) : 0;
-  const hourCount = hourRaw ? parseInt(hourRaw, 10) : 0;
-
-  if (minuteCount >= MAX_PER_MINUTE) {
-    const retryAfter = MINUTE_WINDOW_S - (now % MINUTE_WINDOW_S);
-    return { allowed: false, retryAfter, limit: 'minute', max: MAX_PER_MINUTE };
-  }
-  if (hourCount >= MAX_PER_HOUR) {
-    const retryAfter = HOUR_WINDOW_S - (now % HOUR_WINDOW_S);
-    return { allowed: false, retryAfter, limit: 'hour', max: MAX_PER_HOUR };
+  if (count >= MAX_PER_WINDOW) {
+    const retryAfter = WINDOW_S - (now % WINDOW_S);
+    return { allowed: false, retryAfter };
   }
 
-  await Promise.all([
-    env.RATE_LIMIT.put(minuteKey, String(minuteCount + 1), {
-      expirationTtl: MINUTE_WINDOW_S + 10,
-    }),
-    env.RATE_LIMIT.put(hourKey, String(hourCount + 1), {
-      expirationTtl: HOUR_WINDOW_S + 10,
-    }),
-  ]);
+  await env.RATE_LIMIT.put(key, String(count + 1), {
+    expirationTtl: WINDOW_S + 10,
+  });
 
   return { allowed: true };
 }

@@ -13,7 +13,7 @@ const VALID_CATEGORIES = ['suave', 'hiit', 'fuerza', 'fondo'];
 const VALID_FOCUS = ['resistencia', 'cadencia', 'mixto'];
 const VALID_POSITIONS = ['sentado', 'parado'];
 const INTERVAL_TYPES = ['warmup', 'work', 'recovery', 'cooldown'];
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 1;
 const DURATION_TOLERANCE = 0.20;
 
 function validatePreferences(p) {
@@ -96,6 +96,67 @@ function parseLLMResponse(text) {
   return JSON.parse(trimmed);
 }
 
+export function normalizeDurations(intervals, targetSeconds) {
+  if (!Array.isArray(intervals) || intervals.length === 0) return intervals;
+  const currentTotal = intervals.reduce((s, iv) => s + (Number(iv?.duration) || 0), 0);
+  if (currentTotal <= 0) return intervals;
+  if (currentTotal === targetSeconds) return intervals;
+
+  const factor = targetSeconds / currentTotal;
+  const scaled = intervals.map(iv => Math.max(5, Math.round((Number(iv?.duration) || 0) * factor)));
+
+  const WARMUP_MAX = Math.round(targetSeconds * 0.20);
+  const COOLDOWN_MAX = Math.round(targetSeconds * 0.15);
+  const coreIdx = [];
+  let freed = 0;
+  for (let i = 0; i < intervals.length; i++) {
+    const t = intervals[i].type;
+    const cap = t === 'warmup' ? WARMUP_MAX : t === 'cooldown' ? COOLDOWN_MAX : null;
+    if (cap !== null && scaled[i] > cap) {
+      freed += scaled[i] - cap;
+      scaled[i] = cap;
+    } else if (cap === null) {
+      coreIdx.push(i);
+    }
+  }
+  if (freed > 0 && coreIdx.length > 0) {
+    const coreTotal = coreIdx.reduce((s, i) => s + scaled[i], 0) || 1;
+    let assigned = 0;
+    for (const i of coreIdx) {
+      const add = Math.round(freed * (scaled[i] / coreTotal));
+      scaled[i] += add;
+      assigned += add;
+    }
+    let rem = freed - assigned;
+    const order = [...coreIdx].sort((a, b) => scaled[b] - scaled[a]);
+    let k = 0;
+    while (rem !== 0 && k < coreIdx.length * 100) {
+      scaled[order[k % order.length]] += rem > 0 ? 1 : -1;
+      rem += rem > 0 ? -1 : 1;
+      k++;
+    }
+  }
+
+  let diff = targetSeconds - scaled.reduce((s, d) => s + d, 0);
+  if (diff !== 0) {
+    const order = scaled.map((_, i) => i).sort((a, b) => scaled[b] - scaled[a]);
+    const step = diff > 0 ? 1 : -1;
+    let k = 0;
+    let guard = 0;
+    while (diff !== 0 && guard < intervals.length * 1000) {
+      const idx = order[k % order.length];
+      if (scaled[idx] + step >= 5) {
+        scaled[idx] += step;
+        diff -= step;
+      }
+      k++;
+      guard++;
+    }
+  }
+
+  return intervals.map((iv, i) => ({ ...iv, duration: scaled[i] }));
+}
+
 function isAllowedOrigin(origin, host) {
   return origin && (
     origin.endsWith(host) ||
@@ -155,6 +216,10 @@ async function tryGenerate(preferences, env, maxRetries) {
       continue;
     }
 
+    if (routine && Array.isArray(routine.intervals)) {
+      routine.intervals = normalizeDurations(routine.intervals, preferences.duration_minutes * 60);
+    }
+
     const validationError = validateRoutine(routine, preferences.duration_minutes);
     if (!validationError) {
       return { routine };
@@ -181,9 +246,9 @@ export async function onRequestPost(context) {
   const rl = await checkRateLimit(env, ip);
   if (!rl.allowed) {
     return jsonResponse(
-      { error: `Demasiadas solicitudes. Límite de ${rl.max} por ${rl.limit === 'minute' ? 'minuto' : 'hora'}. Reintenta en ${rl.retryAfter}s.` },
+      { error: 'Demasiadas solicitudes. Límite de 3 por minuto. Reintenta en unos segundos.' },
       429,
-      { ...cResp, 'Retry-After': String(rl.retryAfter) },
+      { ...cResp, 'Retry-After': String(rl.retryAfter || 60) },
     );
   }
 
@@ -205,7 +270,6 @@ export async function onRequestPost(context) {
   }
   return jsonResponse({ error: result.error || 'No se pudo generar la rutina.' }, 502, cResp);
 }
-
 export async function onRequestOptions({ request }) {
   const headers = corsHeaders(request);
   if (Object.keys(headers).length === 0) {
