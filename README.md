@@ -26,11 +26,30 @@ Entrenador Virtual de Ciclismo de Interior. Aplicación web interactiva de asist
 git clone git@github.com:lucianarrua/cicloritmo.git
 cd cicloritmo
 
-# La aplicación es un solo archivo. Abrir en el navegador:
-open index.html
-# o servir con cualquier servidor estático:
-npx serve .
+# Instalar dependencias y construir
+npm install
+npm run build    # genera dist/
+
+# Servir en desarrollo
+npm run dev
 ```
+
+## Deploy
+
+El proyecto es estático. Cualquier plataforma de hosting estático funciona (Cloudflare Pages, Vercel, Netlify, GitHub Pages, etc).
+
+### Cloudflare Pages
+
+```bash
+# Build
+npm run build
+
+# Deploy manual (CLI)
+npx wrangler pages deploy dist --project-name=<nombre-del-proyecto>
+
+# O conectá el repo en dash.cloudflare.com para deploy automático en cada push.
+```
+
 
 ## Licencia
 

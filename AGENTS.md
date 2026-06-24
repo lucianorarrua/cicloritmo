@@ -27,5 +27,11 @@ Single-file web application (index.html) for indoor cycling training.
 - Audio: synthesized via OscillatorNode + GainNode (no external files)
 
 ## Commands
+- `npm run dev`: Start Vite dev server
+- `npm run build`: Build to `dist/` (static output)
 - `npm run lint`: Not configured yet
-- `npm run typecheck`: Not applicable (Vanilla JS)
+
+## Deploy
+- **Platform**: Any static host (Cloudflare Pages, Vercel, Netlify, etc.)
+- **Output**: `dist/` directory after `npm run build`
+- **Cloudflare Pages**: `npx wrangler pages deploy dist --project-name=<name>`
