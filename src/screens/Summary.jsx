@@ -10,9 +10,10 @@ export function Summary() {
     : 0;
 
   return (
-    <div class="max-w-md mx-auto w-full flex flex-col items-center gap-6 py-8">
-      <div class="w-24 h-24 rounded-full bg-clay-surface-soft border border-clay-hairline flex items-center justify-center">
-        <svg class="w-12 h-12 text-clay-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <div class="max-w-sm mx-auto w-full flex flex-col items-center gap-6 py-4">
+      {/* Trophy */}
+      <div class="w-20 h-20 rounded-full bg-clay-surface-card border border-clay-hairline flex items-center justify-center">
+        <svg class="w-10 h-10 text-clay-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
           <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
           <path d="M4 22h16" />
@@ -22,40 +23,49 @@ export function Summary() {
         </svg>
       </div>
 
-      <div class="text-center">
-        <h2 class="display-heading text-3xl text-clay-ink">¡Rutina Completada!</h2>
-        <p class="text-clay-muted mt-2 text-sm">¡Excelente trabajo! Aquí tienes tu resumen.</p>
+      {/* Title */}
+      <div class="text-center space-y-1.5">
+        <h2 class="display-md text-clay-ink">Rutina Completada</h2>
+        <p class="text-sm text-clay-muted">Excelente trabajo. Aqu&iacute; tienes tu resumen.</p>
       </div>
 
-      <div class="bg-clay-surface-card p-6 rounded-3xl border border-clay-hairline w-full">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-clay-surface-soft p-4 rounded-2xl border border-clay-hairline">
-            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-widest">Tiempo de Pedaleo</p>
-            <p class="text-2xl font-black font-mono mt-1 text-clay-ink">{formatTime(globalTimeElapsed)}</p>
+      {/* Stats grid */}
+      <div class="bg-clay-surface-card rounded-3xl border border-clay-hairline p-5 w-full">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-clay-canvas rounded-2xl border border-clay-hairline p-3.5 text-center">
+            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-[0.08em]">Tiempo</p>
+            <p class="text-xl font-bold font-mono text-clay-ink mt-0.5 tabular-nums">{formatTime(globalTimeElapsed)}</p>
           </div>
 
-          <div class="bg-clay-surface-soft p-4 rounded-2xl border border-clay-hairline">
-            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-widest">Calorías Quemadas</p>
-            <p class="text-2xl font-black font-mono mt-1 text-clay-error">{Math.round(estimatedCalories)} kcal</p>
+          <div class="bg-red-50 rounded-2xl border border-red-100 p-3.5 text-center">
+            <p class="text-[10px] font-bold text-red-500 uppercase tracking-[0.08em]">Calor&iacute;as</p>
+            <p class="text-xl font-bold font-mono text-red-600 mt-0.5 tabular-nums">
+              {Math.round(estimatedCalories)}<span class="text-xs font-medium"> kcal</span>
+            </p>
           </div>
 
-          <div class="bg-clay-surface-soft p-4 rounded-2xl border border-clay-hairline">
-            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-widest">Distancia Aprox.</p>
-            <p class="text-2xl font-black font-mono mt-1 text-clay-ink">{estimatedDistance.toFixed(2)} km</p>
+          <div class="bg-clay-canvas rounded-2xl border border-clay-hairline p-3.5 text-center">
+            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-[0.08em]">Distancia</p>
+            <p class="text-xl font-bold font-mono text-clay-ink mt-0.5 tabular-nums">
+              {estimatedDistance.toFixed(2)}<span class="text-xs text-clay-muted"> km</span>
+            </p>
           </div>
 
-          <div class="bg-clay-surface-soft p-4 rounded-2xl border border-clay-hairline">
-            <p class="text-[10px] font-bold text-clay-muted uppercase tracking-widest">Esfuerzo Promedio</p>
-            <p class="text-2xl font-bold font-mono mt-1 text-clay-brand-ochre">Fuerza {avgResistance.toFixed(1)}/10</p>
+          <div class="bg-clay-brand-ochre/15 rounded-2xl border border-clay-brand-ochre/30 p-3.5 text-center">
+            <p class="text-[10px] font-bold text-clay-brand-ochre uppercase tracking-[0.08em]">Esfuerzo Prom.</p>
+            <p class="text-xl font-bold font-mono text-clay-ink mt-0.5 tabular-nums">
+              {avgResistance.toFixed(1)}<span class="text-xs text-clay-muted">/10</span>
+            </p>
           </div>
         </div>
       </div>
 
+      {/* CTA */}
       <button
         onClick={() => actions.setScreen(SCREENS.SELECTOR)}
-        class="w-full py-3.5 rounded-xl bg-clay-ink text-white font-bold text-sm hover:opacity-90 transition"
+        class="clay-btn w-full bg-clay-ink text-clay-on-primary rounded-2xl py-3.5 font-bold text-sm tracking-tight shadow-[0_4px_20px_rgba(10,10,10,0.12)]"
       >
-        Volver al Menú Principal
+        Volver al Men&uacute; Principal
       </button>
     </div>
   );

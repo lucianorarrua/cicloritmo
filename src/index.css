@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -39,18 +39,129 @@ body {
   background-color: var(--color-clay-canvas);
   overscroll-behavior-y: contain;
   color: var(--color-clay-ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.display-heading {
+/* ── Clay Display Typography ── */
+.display-xl {
   font-family: var(--font-display);
+  font-size: 3.5rem;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+.display-lg {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+.display-md {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+.display-sm {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* ── Screen transitions ── */
+.screen-enter {
+  animation: screenIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Feature Card rhythm ── */
+.card-pink {
+  background-color: var(--color-clay-brand-pink);
+  color: var(--color-clay-on-primary);
+}
+.card-teal {
+  background-color: var(--color-clay-brand-teal);
+  color: var(--color-clay-on-dark);
+}
+.card-lavender {
+  background-color: var(--color-clay-brand-lavender);
+  color: var(--color-clay-ink);
+}
+.card-peach {
+  background-color: var(--color-clay-brand-peach);
+  color: var(--color-clay-ink);
+}
+.card-ochre {
+  background-color: var(--color-clay-brand-ochre);
+  color: var(--color-clay-ink);
+}
+.card-cream {
+  background-color: var(--color-clay-surface-card);
+  color: var(--color-clay-ink);
+}
+.card-mint {
+  background-color: var(--color-clay-brand-mint);
+  color: var(--color-clay-ink);
+}
+
+/* ── Clay button press state ── */
+.clay-btn {
+  transition: transform 100ms ease, opacity 150ms ease, background-color 150ms ease;
+}
+.clay-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── No-scrollbar utility ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ── Pulse ring for workout urgency ── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(10, 10, 10, 0.25); }
+  70%  { box-shadow: 0 0 0 12px rgba(10, 10, 10, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(10, 10, 10, 0); }
+}
+
+/* ── Progress shimmer ── */
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+/* ── Countdown urgency pulse ── */
+@keyframes urgentPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+.urgent-pulse {
+  animation: urgentPulse 0.5s ease-in-out infinite;
+}
+
+/* ── Interval transition flash ── */
+@keyframes intervalFlash {
+  0%   { opacity: 0.5; transform: scale(0.96); }
+  60%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.interval-enter {
+  animation: intervalFlash 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Modal sheet slide-up ── */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }

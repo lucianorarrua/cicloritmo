@@ -11,23 +11,23 @@ import {
 } from '../utils/keepAwake.js';
 
 const PHASE_INFO = {
-  warmup: { color: '#1a3a3a', text: 'Calentamiento', textClass: 'text-clay-brand-teal' },
-  work: { color: '#EF4444', text: 'Trabajo', textClass: 'text-clay-error' },
-  recovery: { color: '#22c55e', text: 'Recuperación', textClass: 'text-clay-success' },
-  cooldown: { color: '#b8a4ed', text: 'Enfriamiento', textClass: 'text-clay-brand-lavender' },
+  warmup: { color: '#a4d4c5', bg: 'bg-clay-brand-mint/30', text: 'Calentamiento', textClass: 'text-clay-brand-teal', badge: 'bg-clay-brand-teal text-white' },
+  work: { color: '#EF4444', bg: 'bg-red-50', text: 'Trabajo', textClass: 'text-clay-error', badge: 'bg-clay-error text-white' },
+  recovery: { color: '#22c55e', bg: 'bg-green-50', text: 'Recuperación', textClass: 'text-clay-success', badge: 'bg-clay-success text-white' },
+  cooldown: { color: '#b8a4ed', bg: 'bg-clay-brand-lavender/20', text: 'Enfriamiento', textClass: 'text-clay-brand-lavender', badge: 'bg-clay-brand-lavender text-clay-ink' },
 };
 
 function getPhaseInfo(type) {
-  return PHASE_INFO[type] || { color: '#0a0a0a', text: type, textClass: 'text-clay-ink' };
+  return PHASE_INFO[type] || { color: '#0a0a0a', bg: 'bg-clay-surface-soft', text: type, textClass: 'text-clay-ink', badge: 'bg-clay-ink text-white' };
 }
 
 function getEffortLevel(rpm, res) {
   const score = (rpm || 0) * 0.3 + (res || 0) * 1.5;
-  if (score < 5) return 'Suave';
-  if (score < 10) return 'Moderado';
-  if (score < 15) return 'Medio';
-  if (score < 20) return 'Alto';
-  return 'Máximo';
+  if (score < 5) return { label: 'Suave', color: 'text-clay-brand-mint' };
+  if (score < 10) return { label: 'Moderado', color: 'text-clay-brand-ochre' };
+  if (score < 15) return { label: 'Alto', color: 'text-clay-brand-peach' };
+  if (score < 20) return { label: 'Intenso', color: 'text-clay-brand-coral' };
+  return { label: 'Máximo', color: 'text-clay-error' };
 }
 
 export function Workout() {
@@ -37,6 +37,7 @@ export function Workout() {
 
   const { activeRoutine } = state;
 
+  // Initialise first interval timer
   useEffect(() => {
     if (state.isWorkoutActive && activeRoutine && state.activeIntervalTimeLeft === 0) {
       const first = activeRoutine.intervals[0];
@@ -46,17 +47,17 @@ export function Workout() {
     }
   }, [state.isWorkoutActive]);
 
+  // Keep screen awake
   useEffect(() => {
     startKeepScreenOnLock(state.isPaused);
     setupVisibilityChange(
       () => stateRef.current.isPaused,
       () => stateRef.current.activeRoutine,
     );
-    return () => {
-      stopKeepScreenOnLock();
-    };
+    return () => { stopKeepScreenOnLock(); };
   }, []);
 
+  // Timer heartbeat
   useEffect(() => {
     if (!state.isWorkoutActive) return;
 
@@ -117,10 +118,11 @@ export function Workout() {
     }
   };
 
+  // Loading / error states
   if (!activeRoutine) {
     return (
-      <div class="h-[98vh] sm:h-[85vh] overflow-hidden select-none flex items-center justify-center bg-clay-canvas">
-        <p class="text-clay-ink/40 font-mono text-sm">Cargando rutina...</p>
+      <div class="h-full flex items-center justify-center bg-clay-canvas">
+        <p class="text-clay-muted text-sm font-mono">Cargando rutina...</p>
       </div>
     );
   }
@@ -131,196 +133,223 @@ export function Workout() {
 
   if (!interval) {
     return (
-      <div class="h-[98vh] sm:h-[85vh] overflow-hidden select-none flex items-center justify-center bg-clay-canvas">
-        <p class="text-clay-ink/40 font-mono text-sm">Intervalo no encontrado</p>
+      <div class="h-full flex items-center justify-center bg-clay-canvas">
+        <p class="text-clay-muted text-sm font-mono">Intervalo no encontrado</p>
       </div>
     );
   }
 
   const timeLeft = state.activeIntervalTimeLeft || 0;
   const phaseInfo = getPhaseInfo(interval.type);
-  const progress = interval.duration > 0
+  const intervalProgress = interval.duration > 0
     ? (interval.duration - timeLeft) / interval.duration
     : 0;
   const globalProgress = state.activeRoutineTotalTime > 0
     ? (state.globalTimeElapsed / state.activeRoutineTotalTime) * 100
     : 0;
   const nextInterval = idx + 1 < intervals.length ? intervals[idx + 1] : null;
+  const isUrgent = timeLeft <= 3 && timeLeft > 0;
+  const effort = getEffortLevel(interval.rpm, interval.res);
 
-  const playIcon = (
-    <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+  // SVG icons
+  const PlayIcon = (
+    <svg class="w-7 h-7 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
       <path d="M8 5.14v14l11-7-11-7z" />
     </svg>
   );
-
-  const pauseIcon = (
+  const PauseIcon = (
     <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
       <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
     </svg>
   );
-
-  const chevronLeft = (
+  const ChevronLeft = (
     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6" />
     </svg>
   );
-
-  const chevronRight = (
+  const ChevronRight = (
     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
+  const StopIcon = (
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  );
 
   return (
-    <div class="h-[98vh] sm:h-[85vh] overflow-hidden select-none flex flex-col justify-between bg-clay-canvas">
+    <div class="h-full flex flex-col bg-clay-canvas select-none overflow-hidden">
 
-      {/* Section 1: Top Control Bar */}
-      <div class="flex items-center justify-between px-4 pt-2 pb-1 shrink-0">
+      {/* ── Top Control Bar ── */}
+      <div class="flex items-center justify-between px-4 pt-2 pb-1 shrink-0" style="padding-top: max(0.5rem, env(safe-area-inset-top))">
         <div class="flex-1 min-w-0">
-          <h1 class="text-sm font-semibold text-clay-ink truncate">{activeRoutine.title}</h1>
-          <span class="text-xs text-clay-ink/50 font-mono">{idx + 1}/{intervals.length}</span>
+          <h1 class="text-[13px] font-semibold text-clay-ink truncate">{activeRoutine.title}</h1>
+          <span class="text-[11px] text-clay-muted font-medium font-mono tabular-nums">
+            {idx + 1}<span class="text-clay-muted-soft">/{intervals.length}</span>
+          </span>
         </div>
         <button
           onClick={handleStop}
-          class="ml-3 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 active:bg-red-200 transition-colors"
+          class="ml-3 flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-clay-muted bg-clay-surface-soft border border-clay-hairline rounded-full hover:bg-clay-hairline active:bg-clay-hairline transition-colors"
         >
-          Parar
+          {StopIcon}
+          <span>Parar</span>
         </button>
       </div>
 
-      {/* Section 2: Target Displays */}
-      <div class="grid grid-cols-2 gap-2 px-3 pt-1 pb-2 shrink-0">
-        <div class="bg-clay-surface-soft border border-clay-hairline rounded-xl p-3 text-center">
-          <div class="text-[10px] sm:text-xs text-clay-ink/50 uppercase tracking-wider font-semibold">
-            Cadencia Recomendada
-          </div>
-          <div class="font-mono text-5xl sm:text-6xl font-bold text-clay-ink leading-none py-1">
-            {interval.rpm}
-          </div>
-          <div class="text-[10px] sm:text-xs text-clay-ink/40">RPM (Pedaladas)</div>
+      {/* ── Hero: Phase + Interval Name + Timer ── */}
+      <div class="flex-1 flex flex-col items-center justify-center min-h-0 px-4 gap-4">
+        {/* Phase badge */}
+        <div class={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase ${phaseInfo.badge}`}>
+          {phaseInfo.text}
         </div>
-        <div class="bg-clay-surface-soft border border-clay-hairline rounded-xl p-3 text-center">
-          <div class="text-[10px] sm:text-xs text-clay-ink/50 uppercase tracking-wider font-semibold">
-            Resistencia Bici
-          </div>
-          <div class="font-mono text-5xl sm:text-6xl font-bold text-clay-ink leading-none py-1">
-            {interval.res}
-          </div>
-          <div class="text-[10px] sm:text-xs text-clay-ink/40">Nivel en Perilla (1-10)</div>
-        </div>
-      </div>
 
-      {/* Section 3: Central Console */}
-      <div class="flex flex-row items-center px-4 flex-grow min-h-0">
-        <div class="flex-1 min-w-0">
-          <div class={`text-sm font-semibold ${phaseInfo.textClass}`}>
-            {phaseInfo.text}
-          </div>
-          <div class="text-lg sm:text-xl font-extrabold text-clay-ink leading-tight truncate">
-            {interval.name}
-          </div>
-          <div class="font-mono text-5xl sm:text-6xl font-bold text-clay-ink leading-none mt-1">
-            {formatTime(timeLeft)}
-          </div>
+        {/* Interval name */}
+        <h2 class="text-lg sm:text-xl font-bold text-clay-ink text-center leading-tight px-2">
+          {interval.name}
+        </h2>
+
+        {/* Giant Timer */}
+        <div class={`font-mono font-bold text-clay-ink tabular-nums leading-none select-none ${
+          timeLeft >= 3600 ? 'text-[5.5rem] sm:text-[7rem]'
+            : timeLeft >= 600 ? 'text-[6rem] sm:text-[7.5rem]'
+            : 'text-[6.5rem] sm:text-[8rem]'
+        } ${isUrgent ? 'text-clay-error urgent-pulse' : ''}`}>
+          {formatTime(timeLeft)}
         </div>
-        <div class="ml-3 shrink-0">
+
+        {/* Metronome wheel + interval progress */}
+        <div class="flex items-center gap-4">
           <MetronomeWheel
             rpm={interval.rpm}
             isPaused={state.isPaused}
             soundOn={state.soundOn}
             tickSoundOn={state.tickSoundOn}
             volume={state.volume}
-            progress={progress}
+            progress={intervalProgress}
             phaseColor={phaseInfo.color}
           />
         </div>
       </div>
 
-      {/* Section 4: Next Interval Banner */}
-      {nextInterval && (
-        <div class="mx-4 mb-1 px-3 py-2 bg-clay-surface-soft border border-clay-hairline rounded-lg flex items-center gap-3 shrink-0">
-          <span class="text-[10px] font-semibold uppercase bg-clay-hairline text-clay-ink/60 px-2 py-0.5 rounded tracking-wider">
-            Siguiente
-          </span>
-          <span class="text-sm font-semibold text-clay-ink truncate flex-1">
-            {nextInterval.name}
-          </span>
-          <span class="text-[10px] sm:text-xs text-clay-ink/40 font-mono whitespace-nowrap">
-            {nextInterval.rpm} RPM | Res. {nextInterval.res}
-          </span>
+      {/* ── Target Cards: RPM & Resistance ── */}
+      <div class="grid grid-cols-2 gap-2.5 px-4 pt-1 shrink-0">
+        <div class={`rounded-2xl p-3.5 text-center border ${phaseInfo.bg} border-clay-hairline`}>
+          <div class="text-[10px] font-semibold text-clay-muted uppercase tracking-[0.08em] mb-0.5">
+            Cadencia
+          </div>
+          <div class="font-mono text-4xl sm:text-5xl font-bold text-clay-ink leading-none tabular-nums">
+            {interval.rpm}
+          </div>
+          <div class="text-[10px] text-clay-muted-soft mt-0.5">RPM</div>
         </div>
-      )}
+        <div class={`rounded-2xl p-3.5 text-center border ${phaseInfo.bg} border-clay-hairline`}>
+          <div class="text-[10px] font-semibold text-clay-muted uppercase tracking-[0.08em] mb-0.5">
+            Resistencia
+          </div>
+          <div class="font-mono text-4xl sm:text-5xl font-bold text-clay-ink leading-none tabular-nums">
+            {interval.res}
+          </div>
+          <div class="text-[10px] text-clay-muted-soft mt-0.5">Nivel 1-10</div>
+        </div>
+      </div>
 
-      {/* Section 5: Controls Panel */}
-      <div class="px-4 pt-1 pb-1 shrink-0">
-        <div class="flex justify-between text-[10px] sm:text-xs text-clay-ink/50 mb-1">
-          <span>
-            Tiempo Transcurrido:{' '}
-            <span class="font-mono text-clay-ink/70">{formatTime(state.globalTimeElapsed)}</span>
+      {/* ── Next Interval Banner ── */}
+      <div class="px-4 pt-2 shrink-0">
+        {nextInterval ? (
+          <div class="bg-clay-surface-soft border border-clay-hairline rounded-xl px-3 py-2 flex items-center gap-2.5">
+            <span class="text-[10px] font-bold uppercase text-clay-muted tracking-wider shrink-0">
+              Siguiente
+            </span>
+            <span class="h-4 w-px bg-clay-hairline shrink-0" />
+            <span class="text-xs font-semibold text-clay-ink truncate flex-1">
+              {nextInterval.name}
+            </span>
+            <span class="text-[10px] text-clay-muted font-mono tabular-nums whitespace-nowrap shrink-0">
+              {nextInterval.rpm} RPM · Res {nextInterval.res}
+            </span>
+          </div>
+        ) : (
+          <div class="bg-clay-surface-soft border border-clay-hairline rounded-xl px-3 py-2 flex items-center gap-2.5 opacity-50">
+            <span class="text-[10px] font-bold uppercase text-clay-muted tracking-wider">
+              Último
+            </span>
+            <span class="h-4 w-px bg-clay-hairline" />
+            <span class="text-xs text-clay-muted flex-1">&Uacute;ltimo intervalo de la rutina</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Progress + Controls ── */}
+      <div class="px-4 pt-3 pb-2 shrink-0 space-y-3">
+        {/* Global progress bar */}
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-clay-muted font-mono tabular-nums w-10 text-right">
+            {formatTime(state.globalTimeElapsed)}
           </span>
-          <span>
-            Total:{' '}
-            <span class="font-mono text-clay-ink/70">{formatTime(state.activeRoutineTotalTime)}</span>
+          <div class="flex-1 h-1.5 bg-clay-hairline rounded-full overflow-hidden">
+            <div
+              class="h-full bg-clay-ink rounded-full transition-all duration-1000 ease-linear"
+              style={{ width: `${Math.min(globalProgress, 100)}%` }}
+            />
+          </div>
+          <span class="text-[10px] text-clay-muted font-mono tabular-nums w-10">
+            {formatTime(state.activeRoutineTotalTime)}
           </span>
         </div>
-        <div class="h-1.5 bg-clay-hairline rounded-full mb-3 overflow-hidden">
-          <div
-            class="h-full bg-clay-ink rounded-full transition-all duration-1000 ease-linear"
-            style={{ width: `${Math.min(globalProgress, 100)}%` }}
-          />
-        </div>
-        <div class="flex items-center gap-3">
+
+        {/* Playback controls */}
+        <div class="flex items-center justify-center gap-4">
           <button
             onClick={handlePrev}
             disabled={state.activeIntervalIndex === 0}
-            class="w-11 h-11 flex items-center justify-center rounded-full border border-clay-hairline text-clay-ink/70 hover:bg-clay-surface-soft active:bg-clay-hairline transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            class="w-12 h-12 flex items-center justify-center rounded-full border border-clay-hairline text-clay-ink bg-clay-canvas hover:bg-clay-surface-soft active:bg-clay-hairline transition-colors disabled:opacity-25 disabled:pointer-events-none"
           >
-            {chevronLeft}
+            {ChevronLeft}
           </button>
           <button
             onClick={togglePlayPause}
-            class="flex-[1.5] h-12 bg-clay-ink text-white rounded-full flex items-center justify-center active:bg-clay-ink/90 transition-colors"
+            class="clay-btn w-16 h-16 flex items-center justify-center rounded-full bg-clay-ink text-clay-on-primary shadow-[0_4px_20px_rgba(10,10,10,0.2)]"
           >
-            {state.isPaused ? playIcon : pauseIcon}
+            {state.isPaused ? PlayIcon : PauseIcon}
           </button>
           <button
             onClick={handleNext}
-            class="w-11 h-11 flex items-center justify-center rounded-full border border-clay-hairline text-clay-ink/70 hover:bg-clay-surface-soft active:bg-clay-hairline transition-colors"
+            class="w-12 h-12 flex items-center justify-center rounded-full border border-clay-hairline text-clay-ink bg-clay-canvas hover:bg-clay-surface-soft active:bg-clay-hairline transition-colors"
           >
-            {chevronRight}
+            {ChevronRight}
           </button>
         </div>
       </div>
 
-      {/* Section 6: Live Stats Strip */}
+      {/* ── Live Stats Strip ── */}
       <div class="grid grid-cols-3 border-t border-clay-hairline divide-x divide-clay-hairline shrink-0">
-        <div class="px-2 py-2 text-center">
-          <div class="text-[10px] sm:text-xs text-clay-ink/50 uppercase tracking-wider font-semibold">
+        <div class="py-2.5 text-center">
+          <div class="text-[10px] font-semibold text-clay-muted uppercase tracking-[0.08em] mb-0.5">
             Esfuerzo
           </div>
-          <div class="font-mono text-base sm:text-lg font-bold text-clay-ink">
-            {getEffortLevel(interval.rpm, interval.res)}
+          <div class={`text-sm font-bold font-mono tabular-nums ${effort.color}`}>
+            {effort.label}
           </div>
         </div>
-        <div class="px-2 py-2 text-center">
-          <div class="text-[10px] sm:text-xs text-clay-ink/50 uppercase tracking-wider font-semibold">
-            Calorías
+        <div class="py-2.5 text-center">
+          <div class="text-[10px] font-semibold text-clay-muted uppercase tracking-[0.08em] mb-0.5">
+            Calor&iacute;as
           </div>
-          <div class="font-mono text-base sm:text-lg font-bold text-clay-ink">
-            {Math.round(state.estimatedCalories)}
+          <div class="text-sm font-bold font-mono tabular-nums text-clay-ink">
+            {Math.round(state.estimatedCalories)}<span class="text-[10px] text-clay-muted ml-0.5">kcal</span>
           </div>
         </div>
-        <div class="px-2 py-2 text-center">
-          <div class="text-[10px] sm:text-xs text-clay-ink/50 uppercase tracking-wider font-semibold">
+        <div class="py-2.5 text-center">
+          <div class="text-[10px] font-semibold text-clay-muted uppercase tracking-[0.08em] mb-0.5">
             Distancia
           </div>
-          <div class="font-mono text-base sm:text-lg font-bold text-clay-ink">
-            {state.estimatedDistance.toFixed(1)}
-            <span class="text-xs text-clay-ink/50"> km</span>
+          <div class="text-sm font-bold font-mono tabular-nums text-clay-ink">
+            {state.estimatedDistance.toFixed(1)}<span class="text-[10px] text-clay-muted ml-0.5">km</span>
           </div>
         </div>
       </div>
-
     </div>
   );
 }
