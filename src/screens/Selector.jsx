@@ -1,6 +1,15 @@
 import { useApp, SCREENS } from '../state/store.jsx';
 import { ROUTINES } from '../data/routines.js';
 import { CATEGORIES, CATEGORY_META } from '../data/schema.js';
+import { isAiEnabled } from '../services/generator.js';
+
+const SparkleIcon = () => (
+  <svg class="sparkle-icon w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z" />
+    <path d="M18 16l.75 2.25L21 19l-2.25.75L18 22l-.75-2.25L15 19l2.25-.75z" />
+    <path d="M6 14l.5 1.5L8 16l-1.5.5L6 18l-.5-1.5L4 16l1.5-.5z" />
+  </svg>
+);
 
 function getTotalMinutes(routine) {
   const totalSeconds = routine.intervals.reduce((acc, i) => acc + i.duration, 0);
@@ -18,6 +27,7 @@ export function Selector() {
   });
 
   const showCustom = categoryFilter === 'all' && customRoutine.intervals.length > 0;
+  const aiAvailable = isAiEnabled();
 
   return (
     <div class="flex flex-col gap-5 pb-6">
@@ -55,21 +65,21 @@ export function Selector() {
             <div
               key={key}
               onClick={() => actions.selectRoutine(key)}
-              class={`${meta.color} ${meta.textColor} rounded-3xl p-5 sm:p-6 cursor-pointer flex flex-col justify-between min-h-[180px] active:scale-[0.97] transition-transform duration-150`}
+              class={`${meta.color} ${meta.textColor} rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.97] transition-transform duration-150`}
             >
               <div>
                 <div class="flex justify-between items-start gap-2">
-                  <span class={`text-[11px] px-3 py-1 rounded-full font-semibold border ${meta.badgeClass}`}>
+                  <span class={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${meta.badgeClass}`}>
                     {meta.badge}
                   </span>
-                  <span class="text-sm opacity-75 font-medium tabular-nums">{minutes} min</span>
+                  <span class="text-[11px] opacity-75 font-medium tabular-nums">{minutes} min</span>
                 </div>
-                <h3 class="text-lg font-bold mt-3 leading-tight">{routine.title}</h3>
-                <p class="text-sm mt-1.5 opacity-80 leading-relaxed">{routine.description}</p>
+                <h3 class="text-base font-bold mt-2 leading-tight">{routine.title}</h3>
+                <p class="text-[11px] mt-1 opacity-80 leading-relaxed">{routine.description}</p>
               </div>
-              <div class="flex justify-between items-end mt-5 pt-1">
-                <span class="text-xs opacity-70 font-medium">Max {meta.maxStrength}</span>
-                <span class="text-sm font-semibold">
+              <div class="flex justify-between items-end mt-3 pt-1">
+                <span class="text-[10px] opacity-70 font-medium">Max {meta.maxStrength}</span>
+                <span class="text-[11px] font-semibold">
                   Pedalear <span class="ml-0.5">→</span>
                 </span>
               </div>
@@ -81,21 +91,21 @@ export function Selector() {
         {showCustom && (
           <div
             onClick={() => actions.selectRoutine('custom')}
-            class="card-ochre rounded-3xl p-5 sm:p-6 cursor-pointer flex flex-col justify-between min-h-[180px] active:scale-[0.97] transition-transform duration-150"
+            class="card-ochre rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.97] transition-transform duration-150"
           >
             <div>
               <div class="flex justify-between items-start gap-2">
-                <span class="text-[11px] px-3 py-1 rounded-full font-semibold border bg-clay-canvas/30 text-clay-ink border-clay-ink/20">
+                <span class="text-[10px] px-2.5 py-0.5 rounded-full font-semibold border bg-clay-canvas/30 text-clay-ink border-clay-ink/20">
                   Personalizado
                 </span>
-                <span class="text-sm opacity-75 font-medium tabular-nums">{getTotalMinutes(customRoutine)} min</span>
+                <span class="text-[11px] opacity-75 font-medium tabular-nums">{getTotalMinutes(customRoutine)} min</span>
               </div>
-              <h3 class="text-lg font-bold mt-3 leading-tight">{customRoutine.title}</h3>
-              <p class="text-sm mt-1.5 opacity-80 leading-relaxed">{customRoutine.description}</p>
+              <h3 class="text-base font-bold mt-2 leading-tight">{customRoutine.title}</h3>
+              <p class="text-[11px] mt-1 opacity-80 leading-relaxed">{customRoutine.description}</p>
             </div>
-            <div class="flex justify-between items-end mt-5 pt-1">
-              <span class="text-xs opacity-70 font-medium">A tu medida</span>
-              <span class="text-sm font-semibold">
+            <div class="flex justify-between items-end mt-3 pt-1">
+              <span class="text-[10px] opacity-70 font-medium">A tu medida</span>
+              <span class="text-[11px] font-semibold">
                 Pedalear <span class="ml-0.5">→</span>
               </span>
             </div>
@@ -108,13 +118,16 @@ export function Selector() {
         <div class="text-center sm:text-left">
           <h3 class="text-lg font-bold text-clay-ink">¿Quieres dise&ntilde;ar tu propia rutina?</h3>
           <p class="text-clay-muted text-sm mt-1">
-            Crea intervalos con tus propios tiempos, cadencias y resistencias.
+            {aiAvailable
+              ? 'Genera una rutina con IA o arma cada intervalo manualmente.'
+              : 'Crea intervalos con tus propios tiempos, cadencias y resistencias.'}
           </p>
         </div>
         <button
           onClick={() => actions.setScreen(SCREENS.CREATOR)}
-          class="clay-btn shrink-0 bg-clay-ink text-clay-on-primary rounded-xl px-6 py-3 text-sm font-semibold"
+          class="clay-btn shrink-0 bg-clay-ink text-clay-on-primary rounded-xl px-6 py-3 text-sm font-semibold flex items-center gap-1.5"
         >
+          {aiAvailable && <SparkleIcon />}
           Dise&ntilde;ar Rutina
         </button>
       </div>

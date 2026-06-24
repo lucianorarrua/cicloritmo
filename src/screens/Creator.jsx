@@ -49,7 +49,7 @@ export function Creator() {
   const [position, setPosition] = useState('sentado');
 
   // ── AI mode state ──
-  const [activeTab, setActiveTab] = useState('manual');
+  const [activeTab, setActiveTab] = useState(aiAvailable ? 'ai' : 'manual');
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [category, setCategory] = useState('hiit');
   const [focus, setFocus] = useState('mixto');
@@ -57,6 +57,7 @@ export function Creator() {
   const [extraInstructions, setExtraInstructions] = useState('');
   const [generating, setGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showNewInterval, setShowNewInterval] = useState(false);
 
   const CORE_CATEGORIES = CATEGORIES.filter(c => c.key !== 'all');
 
@@ -167,19 +168,31 @@ export function Creator() {
         <>
           {/* Interval list */}
           <div>
-            <div class="flex items-center justify-between mb-2.5">
-              <h3 class="text-xs font-semibold text-clay-muted uppercase tracking-[0.1em]">Intervalos ({intervals.length})</h3>
-              {aiAvailable && intervals.length > 0 && (
-                <span class="text-[10px] font-medium text-clay-muted-soft bg-clay-surface-soft px-2 py-0.5 rounded-full">
-                  {customRoutine.title || 'Rutina generada'}
-                </span>
-              )}
+            <div class="flex items-stretch justify-between mb-2.5 min-h-[28px]">
+              <h3 class="text-xs font-semibold text-clay-muted uppercase tracking-[0.1em] flex items-center">Intervalos ({intervals.length})</h3>
+              <div class="flex items-center gap-2">
+                {aiAvailable && intervals.length > 0 && (
+                  <span class="text-[10px] font-medium text-clay-muted-soft bg-clay-surface-soft px-2 py-0.5 rounded-full">
+                    {customRoutine.title || 'Rutina generada'}
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowNewInterval(!showNewInterval)}
+                  class="clay-btn text-[11px] font-semibold text-clay-ink bg-clay-ink/5 hover:bg-clay-ink/10 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 leading-none"
+                >
+                  <svg class={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showNewInterval ? 'rotate-45' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  {showNewInterval ? 'Cancelar' : 'Nuevo intervalo'}
+                </button>
+              </div>
             </div>
             <div class="max-h-56 overflow-y-auto space-y-2 pr-1 no-scrollbar">
               {intervals.length === 0 && (
                 <div class="text-center py-10 bg-clay-surface-soft rounded-2xl border border-clay-hairline border-dashed">
                   <p class="text-sm text-clay-muted">No hay intervalos a&uacute;n.</p>
-                  <p class="text-xs text-clay-muted-soft mt-1">Agrega el primero usando el formulario de abajo.</p>
+                  <p class="text-xs text-clay-muted-soft mt-1">Agrega el primero con el bot&oacute;n "Nuevo intervalo".</p>
                 </div>
               )}
               {intervals.map((interval, i) => (
@@ -222,6 +235,7 @@ export function Creator() {
           </div>
 
           {/* New interval form */}
+          {showNewInterval && (
           <div class="bg-clay-surface-card rounded-3xl border border-clay-hairline p-5 sm:p-6">
             <h3 class="text-xs font-semibold text-clay-muted uppercase tracking-[0.1em] mb-4">Nuevo Intervalo</h3>
             <div class="grid grid-cols-2 gap-3">
@@ -301,6 +315,7 @@ export function Creator() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Save CTA */}
           <button

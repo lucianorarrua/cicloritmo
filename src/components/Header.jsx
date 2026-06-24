@@ -1,4 +1,5 @@
 import { useApp } from '../state/store.jsx';
+import { SCREENS } from '../data/schema.js';
 
 export function Header() {
   const { state, actions } = useApp();
@@ -7,7 +8,10 @@ export function Header() {
   return (
     <header class="sticky top-0 z-50 bg-clay-canvas border-b border-clay-hairline">
       <div class="max-w-2xl mx-auto flex items-center justify-between px-3 sm:px-4 h-14">
-        <div class="flex items-center gap-2.5">
+        <button
+          onClick={() => actions.setScreen(SCREENS.SELECTOR)}
+          class="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+        >
           <svg class="w-7 h-7 text-clay-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="18.5" cy="17.5" r="3.5" />
             <circle cx="5.5" cy="17.5" r="3.5" />
@@ -15,7 +19,7 @@ export function Header() {
             <path d="M12 17.5V14l-3-3 4-3 2 3h2" />
           </svg>
           <span class="text-lg font-semibold tracking-tight text-clay-ink">CicloRitmo</span>
-        </div>
+        </button>
 
         <button
           onClick={actions.toggleSound}
