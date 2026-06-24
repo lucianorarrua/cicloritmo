@@ -92,6 +92,9 @@ export function Creator() {
     const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     actions.saveCustomRoutine(id);
     actions.selectRoutine('custom:' + id);
+    actions.resetCustomRoutine();
+    setManualCategory('suave');
+    setShowNewInterval(false);
   }
 
   function togglePosition(pos) {

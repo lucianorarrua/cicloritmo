@@ -116,6 +116,7 @@ function appReducer(state, action) {
         ...state,
         screen: SCREENS.WORKOUT,
         activeIntervalIndex: 0,
+        activeIntervalTimeLeft: 0,
         globalTimeElapsed: 0,
         estimatedCalories: 0,
         estimatedDistance: 0,

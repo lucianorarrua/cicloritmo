@@ -41,6 +41,7 @@ export function Selector() {
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
+    if (!window.confirm('¿Borrar esta rutina personalizada?')) return;
     actions.deleteCustomRoutine(id);
   };
 
@@ -104,10 +105,17 @@ export function Selector() {
               )}
               <div>
                 <div class="flex justify-between items-start gap-2 pr-6">
-                  <span class={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border inline-flex items-center gap-1 ${meta.badgeClass}`}>
-                    {isCustom && <StarBadge />}
-                    {isCustom ? 'Tuya' : meta.badge}
-                  </span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class={`h-5 text-[10px] px-2.5 rounded-full font-semibold border inline-flex items-center gap-1 leading-none ${meta.badgeClass}`}>
+                      {meta.badge}
+                    </span>
+                    {isCustom && (
+                      <span class="h-5 text-[10px] px-2 rounded-full font-semibold border inline-flex items-center gap-1 leading-none bg-white/20 text-current border-white/25">
+                        <StarBadge />
+                        Custom
+                      </span>
+                    )}
+                  </div>
                   <span class="text-[11px] opacity-75 font-medium tabular-nums">{minutes} min</span>
                 </div>
                 <h3 class="text-[15px] font-bold mt-1.5 leading-tight">{routine.title}</h3>

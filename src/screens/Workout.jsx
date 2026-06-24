@@ -92,7 +92,7 @@ export function Workout() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [state.isWorkoutActive]);
+  }, [countdown, state.isWorkoutActive]);
 
   const togglePlayPause = () => {
     if (state.isPaused) {
