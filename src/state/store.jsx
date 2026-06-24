@@ -209,6 +209,9 @@ function appReducer(state, action) {
         customRoutine: { ...state.customRoutine, intervals: action.intervals },
       };
 
+    case 'SET_CUSTOM_ROUTINE':
+      return { ...state, customRoutine: action.routine };
+
     case 'RESET_WORKOUT_STATE':
       return {
         ...state,
@@ -253,6 +256,8 @@ export function AppProvider({ children }) {
       dispatch({ type: 'REMOVE_CUSTOM_INTERVAL', index }), []),
     setCustomIntervals: useCallback((intervals) =>
       dispatch({ type: 'SET_CUSTOM_INTERVALS', intervals }), []),
+    setCustomRoutine: useCallback((routine) =>
+      dispatch({ type: 'SET_CUSTOM_ROUTINE', routine }), []),
     resetWorkoutState: useCallback(() => dispatch({ type: 'RESET_WORKOUT_STATE' }), []),
   };
 

@@ -1,0 +1,16 @@
+# CicloRitmo — Cloudflare Pages config
+# Deploy: pnpm run build && npx wrangler pages deploy dist
+
+name = "cicloritmo"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-06-24"
+
+# Estas variables son para la función (runtime), NO para el build de Vite.
+# VITE_ROUTINE_GENERATOR_URL se configura en Cloudflare Dashboard → Settings → Environment variables.
+[vars]
+AI_PROVIDER = "openai"
+AI_MODEL = "gpt-4o-mini"
+
+# OPENAI_API_KEY debe configurarse como secreto:
+#   npx wrangler pages secret put OPENAI_API_KEY
+# O desde Cloudflare Dashboard → Workers & Pages → cicloritmo → Settings → Secrets
